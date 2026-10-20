@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c11">
+<meta name="description" content="CineMatch – persönliche Film- und Serienempfehlungen">
+<title>CineMatch</title>
+<style>
+/* =========================================================================
+   Design-Tokens
+   ========================================================================= */
+:root {
+  --bg: #0a0c11;
+  --bg2: #10131a;
+  --surface: #151922;
+  --surface2: #1c2130;
+  --line: #262c3b;
+  --line2: #353d52;
+  --text: #eef1f7;
+  --muted: #9aa3b5;
+  --faint: #677086;
+  --accent: #ff6b5b;
+  --accent2: #ffb547;
+  --grad: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%);
+  --good: #3ddc97;
+  --bad: #ff5d73;
+  --warn: #ffcc66;
+  --info: #6aa8ff;
+  --radius: 14px;
+  --shadow: 0 14px 40px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 560px at 8% -12%, rgba(255, 95, 109, .11), transparent 60%),
+    radial-gradient(900px 520px at 100% -5%, rgba(106, 168, 255, .08), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body.modal-open { overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent2); }
+h1 { font-size: 1.75rem; letter-spacing: -.02em; line-height: 1.15; }
+h2 { font-size: 1.25rem; letter-spacing: -.01em; }
+h3 { font-size: 1rem; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.small { font-size: .85rem; }
+svg.i { width: 18px; height: 18px; flex: none; }
+
+/* ---------- Kopfzeile & Navigation ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 22px;
+  padding: 12px 24px;
+  background: rgba(10, 12, 17, .8);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.22rem; letter-spacing: -.02em; color: var(--text); text-decoration: none; }
+.brand .logo { width: 32px; height: 32px; border-radius: 10px; background: var(--grad); display: grid; place-items: center; color: #2a1208; box-shadow: 0 6px 18px rgba(255, 110, 90, .35); }
+.brand .logo svg { width: 16px; height: 16px; }
+.brand b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.nav { display: flex; gap: 2px; flex: 1; }
+.nav a { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 10px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: .9rem; transition: background .15s, color .15s; }
+.nav a:hover { color: var(--text); background: var(--surface); }
+.nav a.active { color: var(--text); background: var(--surface2); box-shadow: inset 0 0 0 1px var(--line); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line2); background: var(--surface2); font-weight: 800; cursor: pointer; flex: none; }
+.avatar:hover { border-color: var(--accent); }
+.view { max-width: 1280px; margin: 0 auto; padding: 26px 24px 90px; }
+.bottomnav { display: none; }
+
+@media (max-width: 860px) {
+  .nav { display: none; }
+  .topbar { padding: 10px 16px; justify-content: space-between; }
+  .view { padding: 18px 16px calc(96px + env(safe-area-inset-bottom)); }
+  .bottomnav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(13, 15, 21, .95); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottomnav a { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: .66rem; color: var(--faint); text-decoration: none; padding: 4px 0; font-weight: 700; }
+  .bottomnav a svg { width: 22px; height: 22px; }
+  .bottomnav a.active { color: var(--accent2); }
+  h1 { font-size: 1.45rem; }
+}
+
+/* ---------- Bausteine ---------- */
+.section { margin: 30px 0; }
+.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.section-head p { color: var(--muted); font-size: .88rem; margin-top: 2px; }
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.page-head p { color: var(--muted); margin-top: 4px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.panel + .panel { margin-top: 16px; }
+.panel h2 { margin-bottom: 4px; }
+.panel > p { color: var(--muted); font-size: .9rem; margin-bottom: 14px; }
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.panels .panel + .panel { margin-top: 0; }
+@media (max-width: 520px) { .panels { grid-template-columns: 1fr; } }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface2); color: var(--text); font-weight: 650; font-size: .88rem; cursor: pointer; transition: background .15s, border-color .15s, transform .1s; white-space: nowrap; text-decoration: none; }
+.btn:hover { border-color: var(--line2); background: #242a3b; }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--grad); color: #2a1208; border: none; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { background: rgba(255, 93, 115, .12); color: var(--bad); border-color: rgba(255, 93, 115, .35); }
+.btn.danger:hover { background: rgba(255, 93, 115, .2); }
+.btn.ghost { background: transparent; }
+.btn.ghost:hover { background: var(--surface2); }
+.btn.sm { padding: 6px 10px; font-size: .8rem; border-radius: 9px; }
+.btn.icon { padding: 8px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn .spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
+.seg button { border: none; background: none; padding: 7px 12px; border-radius: 9px; color: var(--muted); font-weight: 650; cursor: pointer; font-size: .86rem; display: inline-flex; gap: 6px; align-items: center; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--surface2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line2); }
+.seg .count { font-size: .72rem; color: var(--faint); font-weight: 700; }
+.tabs-scroll { overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+.tabs-scroll::-webkit-scrollbar { display: none; }
+.tabs-scroll .seg { flex-wrap: nowrap; }
+
+.input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg2); outline: none; transition: border-color .15s, box-shadow .15s; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 107, 91, .15); }
+select.input { appearance: none; padding-right: 32px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 17px) 52%, calc(100% - 12px) 52%; background-size: 5px 5px; background-repeat: no-repeat; cursor: pointer; }
+.input.sm { padding: 6px 10px; font-size: .84rem; width: auto; }
+select.input.sm { padding-right: 28px; }
+textarea.input { resize: vertical; min-height: 70px; }
+label.field { display: flex; flex-direction: column; gap: 6px; font-size: .84rem; color: var(--muted); font-weight: 600; }
+.inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.inline .input { flex: 1; min-width: 180px; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface2); border: 1px solid var(--line); font-size: .78rem; color: var(--muted); font-weight: 600; }
+.chip.accent { color: #ffbe9a; background: rgba(255, 140, 90, .1); border-color: rgba(255, 140, 90, .28); }
+.chip.gold { color: var(--warn); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip button { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 0 0 2px; }
+.chip button:hover { color: var(--bad); }
+.chip.big { font-size: .9rem; padding: 7px 12px; color: var(--text); }
+.chip.add { cursor: pointer; border-style: dashed; }
+.chip.add:hover { color: var(--text); border-color: var(--accent); }
+
+.notice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: rgba(106, 168, 255, .08); border: 1px solid rgba(106, 168, 255, .25); color: #d2e2ff; font-size: .9rem; margin: 16px 0; }
+.notice.warn { background: rgba(255, 204, 102, .07); border-color: rgba(255, 204, 102, .28); color: #ffe6b3; }
+.notice.err { background: rgba(255, 93, 115, .07); border-color: rgba(255, 93, 115, .3); color: #ffd0d7; }
+.notice .ico { font-size: 1.2rem; line-height: 1.2; }
+.notice .grow { flex: 1; }
+.notice .btn { margin-top: 8px; }
+
+.empty { text-align: center; padding: 42px 18px; border: 1px dashed var(--line2); border-radius: var(--radius); color: var(--muted); }
+.empty .big { font-size: 2.2rem; margin-bottom: 6px; }
+.empty h3 { color: var(--text); margin-bottom: 4px; }
+.empty .btn { margin-top: 14px; }
+
+/* ---------- Hero ---------- */
+.hero { display: flex; gap: 20px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 22px; border-radius: 18px; background: linear-gradient(135deg, rgba(255, 95, 109, .14), rgba(255, 195, 113, .05) 50%, rgba(106, 168, 255, .06)); border: 1px solid var(--line); }
+.hero p { color: var(--muted); margin-top: 4px; }
+.stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat { min-width: 84px; padding: 10px 14px; border-radius: 12px; background: rgba(10, 12, 17, .55); border: 1px solid var(--line); }
+.stat b { display: block; font-size: 1.3rem; line-height: 1.1; }
+.stat span { font-size: .74rem; color: var(--muted); font-weight: 600; }
+@media (max-width: 560px) { .stats { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 8px; } .stat { min-width: 0; padding: 8px 10px; } .hero { padding: 18px; } }
+
+/* ---------- Karten ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 16px; }
+@media (max-width: 560px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+.card { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform .16s ease, border-color .16s, box-shadow .16s; outline: none; }
+.card:hover, .card:focus-visible { transform: translateY(-3px); border-color: var(--line2); box-shadow: var(--shadow); }
+.card:focus-visible { border-color: var(--accent); }
+.poster { position: relative; aspect-ratio: 2 / 3; background: var(--surface2); overflow: hidden; }
+.poster img, .ph { position: absolute; inset: 0; width: 100%; height: 100%; }
+.poster img { object-fit: cover; display: block; }
+.ph { display: flex; align-items: flex-end; padding: 12px; font-weight: 800; font-size: 1rem; line-height: 1.15; color: rgba(255, 255, 255, .93); text-shadow: 0 2px 10px rgba(0, 0, 0, .45); overflow: hidden; }
+.ph span { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.badge { position: absolute; z-index: 2; font-size: .68rem; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: rgba(5, 6, 10, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); letter-spacing: .01em; }
+.badge.type { top: 8px; left: 8px; }
+.badge.score { top: 8px; right: 8px; color: var(--warn); }
+.badge.status { bottom: 8px; left: 8px; }
+.s-seen { color: var(--good); } .s-paused { color: var(--warn); } .s-watchlist { color: var(--info); }
+.card-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.card h3 { font-size: .93rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.meta { color: var(--muted); font-size: .79rem; }
+.card .ov { color: var(--faint); font-size: .76rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; }
+.reasons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.reason { font-size: .69rem; padding: 2px 8px; border-radius: 999px; background: rgba(255, 140, 90, .11); color: #ffb994; border: 1px solid rgba(255, 140, 90, .24); font-weight: 650; }
+.quick { position: absolute; z-index: 3; right: 8px; bottom: 8px; display: flex; gap: 6px; opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; }
+.card:hover .quick, .card:focus-within .quick { opacity: 1; transform: none; }
+@media (hover: none) { .quick { opacity: 1; transform: none; } }
+.quick button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .14); background: rgba(8, 9, 13, .78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); cursor: pointer; display: grid; place-items: center; font-size: .95rem; color: var(--text); }
+.quick button:hover { background: rgba(255, 107, 91, .85); color: #1d0b06; }
+.quick svg { width: 16px; height: 16px; }
+.card.skeleton { cursor: default; pointer-events: none; }
+.card.skeleton .poster, .sk-line { background: linear-gradient(90deg, var(--surface2) 0%, #252b3b 50%, var(--surface2) 100%); background-size: 200% 100%; animation: shimmer 1.3s infinite; }
+.sk-line { height: 10px; border-radius: 6px; margin: 4px 0; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ---------- Weiter schauen ---------- */
+.row-scroll { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(290px, 340px); gap: 14px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+@media (max-width: 560px) { .row-scroll { grid-auto-columns: 86%; } }
+.cont-card { scroll-snap-align: start; display: flex; gap: 12px; padding: 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.cont-poster { position: relative; width: 78px; flex: none; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; background: var(--surface2); cursor: pointer; }
+.cont-poster .ph { font-size: .7rem; padding: 6px; }
+.cont-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.cont-body h3 { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cont-body .where { font-weight: 700; color: var(--warn); font-size: .9rem; }
+.progress { height: 5px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--grad); border-radius: 4px; }
+.cont-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+
+/* ---------- Geschmacksprofil ---------- */
+.profile-panel { margin-bottom: 18px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; }
+@media (max-width: 760px) { .profile-panel { grid-template-columns: 1fr; } }
+.profile-panel h3 { margin-bottom: 10px; font-size: .95rem; }
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: 96px 1fr 46px; gap: 10px; align-items: center; font-size: .84rem; }
+.bar { position: relative; height: 8px; border-radius: 5px; background: var(--surface2); }
+.bar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line2); }
+.bar span { position: absolute; top: 0; bottom: 0; border-radius: 5px; }
+.bar span.pos { left: 50%; background: var(--good); }
+.bar span.neg { right: 50%; background: var(--bad); }
+.bar-row .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.rules { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: .85rem; color: var(--muted); }
+.rules li { padding-left: 16px; position: relative; }
+.rules li::before { content: ""; position: absolute; left: 2px; top: .55em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.rules b { color: var(--text); }
+
+/* ---------- Toolbar / Suche ---------- */
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.search { position: relative; flex: 1; min-width: 220px; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
+.search .input { padding-left: 38px; }
+.toolbar select.input { width: auto; min-width: 150px; }
+.result-meta { color: var(--muted); font-size: .85rem; margin: -6px 0 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dot { width: 4px; height: 4px; border-radius: 50%; background: var(--faint); display: inline-block; }
+
+/* ---------- Meine Liste ---------- */
+.list { display: flex; flex-direction: column; gap: 10px; }
+.lrow { display: flex; gap: 14px; align-items: flex-start; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.lthumb { position: relative; width: 62px; flex: none; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; background: var(--surface2); cursor: pointer; }
+.lthumb .ph { font-size: .6rem; padding: 5px; }
+.linfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ltitle { font-weight: 750; cursor: pointer; }
+.ltitle:hover { color: var(--accent2); }
+.lcontrols { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-top: 2px; }
+.se { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); font-weight: 700; }
+.se input { width: 58px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); text-align: center; }
+.se input:focus { outline: none; border-color: var(--accent); }
+
+.stars { display: inline-flex; gap: 1px; }
+.stars button { background: none; border: none; font-size: 1.3rem; line-height: 1; color: #384057; cursor: pointer; padding: 2px 1px; transition: color .1s, transform .1s; }
+.stars button.on { color: var(--warn); }
+.stars:hover button { color: var(--warn); }
+.stars button:hover ~ button { color: #384057; }
+.stars button:active { transform: scale(.85); }
+.thumbs { display: inline-flex; gap: 6px; }
+.thumbs button { width: 36px; height: 32px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface2); cursor: pointer; font-size: .95rem; filter: grayscale(.85); opacity: .75; transition: .15s; }
+.thumbs button:hover { opacity: 1; filter: none; }
+.thumbs button.on-up { background: rgba(61, 220, 151, .16); border-color: var(--good); filter: none; opacity: 1; }
+.thumbs button.on-down { background: rgba(255, 93, 115, .16); border-color: var(--bad); filter: none; opacity: 1; }
+
+/* ---------- Modal / Dialog ---------- */
+.backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(3, 4, 8, .74); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fade .16s ease; }
+#dialog-root .backdrop { z-index: 60; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { transform: translateY(14px); opacity: .4; } }
+.modal { position: relative; width: 100%; max-width: 900px; max-height: calc(100vh - 40px); overflow: auto; background: var(--bg2); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); animation: rise .2s ease; }
+.modal.small { max-width: 460px; }
+.modal.medium { max-width: 620px; }
+.modal .pad { padding: 22px; }
+.modal .pad h3 { font-size: 1.15rem; margin-bottom: 8px; }
+.modal .pad > p { color: var(--muted); }
+.modal-close { position: absolute; top: 12px; right: 12px; z-index: 5; background: rgba(10, 12, 17, .7) !important; border-radius: 50%; }
+@media (max-width: 640px) {
+  .backdrop { padding: 0; align-items: flex-end; }
+  .modal { border-radius: 20px 20px 0 0; max-height: 93vh; }
+}
+.detail { display: grid; grid-template-columns: 250px 1fr; gap: 26px; padding: 26px; }
+.detail-poster { position: relative; aspect-ratio: 2 / 3; border-radius: 14px; overflow: hidden; background: var(--surface2); box-shadow: var(--shadow); align-self: start; }
+.detail-poster .ph { font-size: 1.3rem; }
+.detail-info { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.detail-info h2 { font-size: 1.6rem; line-height: 1.15; padding-right: 36px; }
+.kicker { color: var(--accent2); font-weight: 750; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+.overview { color: #cdd3df; }
+.block { border-top: 1px solid var(--line); padding-top: 12px; }
+.block h4 { font-size: .76rem; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); margin-bottom: 8px; }
+.block.two { display: flex; gap: 26px; flex-wrap: wrap; }
+.stepper { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.stepper button { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--surface2); cursor: pointer; font-weight: 800; }
+.stepper button:hover { background: var(--line2); }
+.stepper span { min-width: 92px; text-align: center; font-weight: 700; font-size: .88rem; }
+.breakdown { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.breakdown td { padding: 5px 0; border-bottom: 1px dashed var(--line); }
+.breakdown td.v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; width: 70px; }
+.breakdown tr.total td { border-bottom: none; font-weight: 800; color: var(--text); padding-top: 8px; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.prov-group { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+.prov-label { width: 92px; flex: none; font-size: .78rem; color: var(--muted); font-weight: 700; padding-top: 8px; }
+.prov-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.prov { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 4px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-size: .8rem; font-weight: 600; }
+.prov img { width: 26px; height: 26px; border-radius: 7px; }
+.attrib { font-size: .75rem; color: var(--faint); margin-top: 6px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 4px; }
+.detail .actions { justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 14px; }
+@media (max-width: 640px) {
+  .detail { grid-template-columns: 1fr; padding: 20px 16px 26px; gap: 16px; }
+  .detail-poster { width: 46%; max-width: 190px; }
+  .detail-info h2 { font-size: 1.35rem; }
+}
+
+/* ---------- Formular ---------- */
+.form-grid { display: grid; gap: 14px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .row3 { grid-template-columns: 1fr 1fr; } }
+form[data-type="movie"] .seasons-field { display: none; }
+fieldset { border: none; }
+legend { font-size: .84rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.picks { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick input { position: absolute; opacity: 0; pointer-events: none; }
+.pick span { display: inline-block; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: .8rem; cursor: pointer; font-weight: 600; color: var(--muted); transition: .12s; }
+.pick input:checked + span { background: rgba(255, 107, 91, .16); border-color: var(--accent); color: var(--text); }
+.pick input:focus-visible + span { box-shadow: 0 0 0 3px rgba(255, 107, 91, .3); }
+.form-error { color: var(--bad); font-size: .84rem; min-height: 1em; }
+
+/* ---------- Toasts ---------- */
+#toasts { position: fixed; z-index: 80; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(92vw, 440px); pointer-events: none; }
+@media (max-width: 860px) { #toasts { bottom: calc(84px + env(safe-area-inset-bottom)); } }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; background: #20263a; border: 1px solid var(--line2); box-shadow: var(--shadow); font-size: .88rem; font-weight: 600; animation: rise .2s ease; width: 100%; }
+.toast span { flex: 1; }
+.toast.ok { border-color: rgba(61, 220, 151, .5); }
+.toast.err { border-color: rgba(255, 93, 115, .6); }
+.toast button { background: none; border: none; color: var(--accent2); font-weight: 800; cursor: pointer; }
+.toast.out { opacity: 0; transform: translateY(8px); transition: .25s; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: .86rem; }
+.kv dt { color: var(--muted); }
+.kv dd { font-weight: 650; }
+.steps { padding-left: 18px; color: var(--muted); font-size: .86rem; display: flex; flex-direction: column; gap: 4px; margin: 10px 0 0; }
+.status-line { font-size: .84rem; margin-top: 10px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#start" aria-label="CineMatch Startseite">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg></span>
+    <span>Cine<b>Match</b></span>
+  </a>
+  <nav class="nav" id="nav" aria-label="Hauptnavigation"></nav>
+  <button class="avatar" id="avatar" data-action="goto" data-value="konto" aria-label="Konto">?</button>
+</header>
+
+<main id="view" class="view" tabindex="-1"></main>
+
+<nav class="bottomnav" id="bottomnav" aria-label="Navigation"></nav>
+<div id="modal-root"></div>
+<div id="dialog-root"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<input type="file" id="import-file" accept="application/json,.json" hidden>
+<noscript><p style="padding:24px">CineMatch benötigt JavaScript.</p></noscript>
+
+<script>
+'use strict';
+
+/* =========================================================================
+   1. KONSTANTEN & STAMMDATEN
+   ========================================================================= */
+
+const SCHEMA_VERSION = 1;
+const STORAGE_KEY = 'cinematch.data.v1';      // Nutzerdaten (Profil, Liste, Interessen, eigene Titel)
+const TOKEN_KEY = 'cinematch.tmdbToken';      // TMDB-Schlüssel – bewusst getrennt, nie im Export
+const CACHE_PREFIX = 'cinematch.cache:';      // API-Zwischenspeicher
+const CACHE_TTL = 6 * 60 * 60 * 1000;         // 6 Stunden
+const DAY = 24 * 60 * 60 * 1000;
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/';
+const CURRENT_YEAR = new Date().getFullYear();
+
+const STATUS = { seen: 'Gesehen', paused: 'Pausiert', watchlist: 'Merkliste' };
+const STATUS_ICON = { seen: '✓', paused: '⏸', watchlist: '🔖' };
+
+/** Einheitliches Genre-Vokabular für Katalog und TMDB. */
+const GENRES = ['Action', 'Abenteuer', 'Animation', 'Komödie', 'Krimi', 'Doku', 'Drama', 'Familie', 'Fantasy',
+  'Historie', 'Horror', 'Musik', 'Mystery', 'Romantik', 'Sci-Fi', 'Thriller', 'Krieg', 'Western', 'Kinder',
+  'Reality', 'Politik', 'TV-Film', 'Soap', 'Talk', 'News'];
+const PICKABLE_GENRES = GENRES.slice(0, 20);
+
+/** TMDB-Genre-IDs (Film + Serie) → eigene Genre-Namen. Kombi-Genres werden aufgeteilt. */
+const TMDB_GENRES = {
+  28: ['Action'], 12: ['Abenteuer'], 16: ['Animation'], 35: ['Komödie'], 80: ['Krimi'], 99: ['Doku'],
+  18: ['Drama'], 10751: ['Familie'], 14: ['Fantasy'], 36: ['Historie'], 27: ['Horror'], 10402: ['Musik'],
+  9648: ['Mystery'], 10749: ['Romantik'], 878: ['Sci-Fi'], 10770: ['TV-Film'], 53: ['Thriller'],
+  10752: ['Krieg'], 37: ['Western'], 10759: ['Action', 'Abenteuer'], 10762: ['Kinder'], 10763: ['News'],
+  10764: ['Reality'], 10765: ['Sci-Fi', 'Fantasy'], 10766: ['Soap'], 10767: ['Talk'], 10768: ['Krieg', 'Politik'],
+};
+
+/** Begriffe, die bei Interessen als Genre erkannt werden (normalisiert, ohne Umlaute). */
+const GENRE_SYNONYMS = {
+  'krimi': 'Krimi', 'krimis': 'Krimi', 'crime': 'Krimi', 'sci fi': 'Sci-Fi', 'scifi': 'Sci-Fi',
+  'science fiction': 'Sci-Fi', 'komodie': 'Komödie', 'komodien': 'Komödie', 'comedy': 'Komödie',
+  'horror': 'Horror', 'grusel': 'Horror', 'action': 'Action', 'abenteuer': 'Abenteuer', 'adventure': 'Abenteuer',
+  'animation': 'Animation', 'anime': 'Animation', 'zeichentrick': 'Animation', 'doku': 'Doku', 'dokus': 'Doku',
+  'dokumentation': 'Doku', 'documentary': 'Doku', 'drama': 'Drama', 'familie': 'Familie', 'familienfilm': 'Familie',
+  'fantasy': 'Fantasy', 'historie': 'Historie', 'geschichte': 'Historie', 'history': 'Historie', 'musik': 'Musik',
+  'musical': 'Musik', 'mystery': 'Mystery', 'romantik': 'Romantik', 'romance': 'Romantik', 'liebesfilm': 'Romantik',
+  'thriller': 'Thriller', 'krieg': 'Krieg', 'kriegsfilm': 'Krieg', 'western': 'Western', 'kinder': 'Kinder',
+  'reality': 'Reality', 'politik': 'Politik',
+};
+
+/** Bekannte Reihen: Erkennung über den Titel, damit auch Online-Titel einer Reihe zugeordnet werden. */
+const FRANCHISES = [
+  { name: 'Marvel', re: /\b(marvel|avengers|iron ?man|thor|captain america|spider-?man|guardians of the galaxy|black panther|black widow|deadpool|x-men|wolverine|ant-man|doctor strange|loki|wandavision|hawkeye|she-hulk|hulk|thunderbolts|fantastic four|eternals|shang-chi|daredevil|venom|moon knight|ironheart|agatha)\b/i },
+  { name: 'DC', re: /\b(batman|superman|justice league|joker|aquaman|wonder woman|the flash|peacemaker|the penguin|suicide squad|shazam|black adam|blue beetle|supergirl|creature commandos)\b/i },
+  { name: 'Star Wars', re: /\b(star wars|mandalorian|andor|ahsoka|obi-wan|boba fett|skeleton crew|acolyte|rogue one)\b/i },
+  { name: 'John Wick', re: /\b(john wick|the continental)\b/i },
+  { name: 'Harry Potter', re: /(harry potter|phantastische tierwesen|fantastic beasts|hogwarts)/i },
+  { name: 'Herr der Ringe', re: /(herr der ringe|der hobbit|ringe der macht|lord of the rings|the hobbit|rings of power)/i },
+  { name: 'Game of Thrones', re: /(game of thrones|house of the dragon|knight of the seven kingdoms)/i },
+  { name: 'Star Trek', re: /star trek/i },
+  { name: 'James Bond', re: /(james bond|\b007\b)/i },
+  { name: 'Mission: Impossible', re: /mission:? impossible/i },
+  { name: 'Fast & Furious', re: /(fast (&|and) furious|\bfast x\b|hobbs (&|und) shaw)/i },
+  { name: 'Jurassic Park', re: /jurassic/i },
+  { name: 'Dune', re: /\bdune\b/i },
+  { name: 'Matrix', re: /\bmatrix\b/i },
+  { name: 'Alien', re: /(\baliens?\b|prometheus)/i },
+  { name: 'MonsterVerse', re: /(godzilla|\bkong\b)/i },
+  { name: 'Transformers', re: /transformers/i },
+];
+
+const SUGGESTED_INTERESTS = ['Marvel', 'Star Wars', 'John Wick', 'DC', 'Harry Potter', 'Avengers', 'Krimi',
+  'Sci-Fi', 'Horror', 'Komödie', 'Thriller', 'Fantasy', 'Animation', 'Doku'];
+
+/** Beispielkatalog (≈25 bekannte Titel). tmdbId wird beim ersten Laden mit TMDB abgeglichen. */
+const SAMPLE_CATALOG = [
+  { id: 'cat:avengers-endgame', type: 'movie', title: 'Avengers: Endgame', year: 2019, genres: ['Action', 'Abenteuer', 'Sci-Fi'], franchise: 'Marvel', tmdbId: 299534, overview: 'Nach Thanos’ Fingerschnipsen setzen die verbliebenen Avengers alles daran, die Hälfte des Universums zurückzuholen.' },
+  { id: 'cat:guardians-galaxy', type: 'movie', title: 'Guardians of the Galaxy', year: 2014, genres: ['Action', 'Sci-Fi', 'Komödie', 'Abenteuer'], franchise: 'Marvel', tmdbId: 118340, overview: 'Der Abenteurer Peter Quill gerät mit einer Truppe schräger Außenseiter in einen Kampf um eine mächtige Kugel.' },
+  { id: 'cat:spiderman-nwh', type: 'movie', title: 'Spider-Man: No Way Home', year: 2021, genres: ['Action', 'Abenteuer', 'Sci-Fi'], franchise: 'Marvel', tmdbId: 634649, overview: 'Nachdem seine Identität enthüllt wurde, bittet Peter Parker Doctor Strange um Hilfe – und öffnet das Multiversum.' },
+  { id: 'cat:deadpool-wolverine', type: 'movie', title: 'Deadpool & Wolverine', year: 2024, genres: ['Action', 'Komödie', 'Sci-Fi'], franchise: 'Marvel', tmdbId: 533535, overview: 'Der vorlaute Söldner Deadpool muss sich mit einem widerwilligen Wolverine zusammentun, um seine Welt zu retten.' },
+  { id: 'cat:john-wick', type: 'movie', title: 'John Wick', year: 2014, genres: ['Action', 'Thriller', 'Krimi'], franchise: 'John Wick', tmdbId: 245891, overview: 'Ein ehemaliger Auftragskiller kehrt in die Unterwelt zurück, nachdem Gangster ihm das Letzte genommen haben, was ihm geblieben war.' },
+  { id: 'cat:john-wick-4', type: 'movie', title: 'John Wick: Kapitel 4', year: 2023, genres: ['Action', 'Thriller', 'Krimi'], franchise: 'John Wick', tmdbId: 603692, overview: 'John Wick sucht einen Weg, die Hohe Kammer zu besiegen – und kämpft sich dabei von Berlin bis Paris.' },
+  { id: 'cat:dark-knight', type: 'movie', title: 'The Dark Knight', year: 2008, genres: ['Action', 'Krimi', 'Drama', 'Thriller'], franchise: 'DC', tmdbId: 155, overview: 'Batman stellt sich dem Joker, der Gotham City mit seinem Chaos an den Rand des Abgrunds treibt.' },
+  { id: 'cat:inception', type: 'movie', title: 'Inception', year: 2010, genres: ['Sci-Fi', 'Action', 'Thriller'], tmdbId: 27205, overview: 'Ein Dieb, der Geheimnisse aus Träumen stiehlt, soll diesmal eine Idee in den Kopf eines Erben einpflanzen.' },
+  { id: 'cat:interstellar', type: 'movie', title: 'Interstellar', year: 2014, genres: ['Sci-Fi', 'Drama', 'Abenteuer'], tmdbId: 157336, overview: 'Ein Team von Astronauten reist durch ein Wurmloch, um eine neue Heimat für die Menschheit zu finden.' },
+  { id: 'cat:dune', type: 'movie', title: 'Dune', year: 2021, genres: ['Sci-Fi', 'Abenteuer', 'Drama'], franchise: 'Dune', tmdbId: 438631, overview: 'Paul Atreides kommt auf den gefährlichen Wüstenplaneten Arrakis – die einzige Quelle der wertvollsten Substanz des Universums.' },
+  { id: 'cat:matrix', type: 'movie', title: 'Matrix', year: 1999, genres: ['Sci-Fi', 'Action'], franchise: 'Matrix', tmdbId: 603, overview: 'Der Hacker Neo erfährt, dass seine Welt eine Simulation ist, und schließt sich dem Widerstand an.' },
+  { id: 'cat:parasite', type: 'movie', title: 'Parasite', year: 2019, genres: ['Drama', 'Thriller', 'Komödie'], tmdbId: 496243, overview: 'Eine arme Familie schleicht sich nach und nach in den Haushalt einer reichen Familie ein – mit ungeahnten Folgen.' },
+  { id: 'cat:oppenheimer', type: 'movie', title: 'Oppenheimer', year: 2023, genres: ['Drama', 'Historie'], tmdbId: 872585, overview: 'Die Geschichte des Physikers J. Robert Oppenheimer und der Entwicklung der Atombombe.' },
+  { id: 'cat:lotr-1', type: 'movie', title: 'Der Herr der Ringe: Die Gefährten', year: 2001, genres: ['Fantasy', 'Abenteuer', 'Action'], franchise: 'Herr der Ringe', tmdbId: 120, overview: 'Der Hobbit Frodo bricht mit acht Gefährten auf, um den Einen Ring im Feuer des Schicksalsberges zu zerstören.' },
+  { id: 'cat:breaking-bad', type: 'tv', title: 'Breaking Bad', year: 2008, seasons: 5, genres: ['Krimi', 'Drama', 'Thriller'], tmdbId: 1396, overview: 'Ein Chemielehrer mit Krebsdiagnose beginnt, Crystal Meth herzustellen, um seine Familie abzusichern.' },
+  { id: 'cat:dark', type: 'tv', title: 'Dark', year: 2017, seasons: 3, genres: ['Sci-Fi', 'Mystery', 'Drama', 'Thriller'], tmdbId: 70523, overview: 'In der Kleinstadt Winden verschwinden Kinder – und vier Familien stoßen auf ein Geheimnis, das Generationen umspannt.' },
+  { id: 'cat:stranger-things', type: 'tv', title: 'Stranger Things', year: 2016, seasons: 5, genres: ['Sci-Fi', 'Horror', 'Mystery', 'Drama'], tmdbId: 66732, overview: 'Nach dem Verschwinden eines Jungen stoßen seine Freunde in Hawkins auf übernatürliche Kräfte und geheime Experimente.' },
+  { id: 'cat:got', type: 'tv', title: 'Game of Thrones', year: 2011, seasons: 8, genres: ['Fantasy', 'Drama', 'Abenteuer', 'Action'], franchise: 'Game of Thrones', tmdbId: 1399, overview: 'Adelshäuser ringen in Westeros um den Eisernen Thron, während im Norden eine uralte Bedrohung erwacht.' },
+  { id: 'cat:mandalorian', type: 'tv', title: 'The Mandalorian', year: 2019, seasons: 3, genres: ['Sci-Fi', 'Action', 'Abenteuer'], franchise: 'Star Wars', tmdbId: 82856, overview: 'Ein einsamer Kopfgeldjäger beschützt in den äußeren Bereichen der Galaxis ein geheimnisvolles Kind.' },
+  { id: 'cat:last-of-us', type: 'tv', title: 'The Last of Us', year: 2023, seasons: 2, genres: ['Drama', 'Sci-Fi', 'Action', 'Horror'], tmdbId: 100088, overview: 'Zwanzig Jahre nach dem Zusammenbruch der Zivilisation soll Joel die junge Ellie quer durch die USA bringen.' },
+  { id: 'cat:loki', type: 'tv', title: 'Loki', year: 2021, seasons: 2, genres: ['Sci-Fi', 'Fantasy', 'Abenteuer'], franchise: 'Marvel', tmdbId: 84958, overview: 'Der Gott des Schabernacks gerät in die Fänge der Time Variance Authority und reist durch die Zeitlinien.' },
+  { id: 'cat:haus-des-geldes', type: 'tv', title: 'Haus des Geldes', year: 2017, seasons: 5, genres: ['Krimi', 'Thriller', 'Drama'], tmdbId: 71446, overview: 'Ein Mann, der sich „der Professor“ nennt, plant mit acht Spezialisten den größten Raubüberfall der Geschichte Spaniens.' },
+  { id: 'cat:babylon-berlin', type: 'tv', title: 'Babylon Berlin', year: 2017, seasons: 4, genres: ['Krimi', 'Drama', 'Historie'], tmdbId: 69851, overview: 'Berlin 1929: Kommissar Gereon Rath ermittelt zwischen Glamour, Unterwelt und politischem Umbruch.' },
+  { id: 'cat:sherlock', type: 'tv', title: 'Sherlock', year: 2010, seasons: 4, genres: ['Krimi', 'Mystery', 'Drama'], tmdbId: 19885, overview: 'Sherlock Holmes und Dr. Watson lösen im modernen London spektakuläre Kriminalfälle.' },
+  { id: 'cat:arcane', type: 'tv', title: 'Arcane', year: 2021, seasons: 2, genres: ['Animation', 'Sci-Fi', 'Fantasy', 'Action'], tmdbId: 94605, overview: 'Die Schwestern Vi und Jinx stehen auf verschiedenen Seiten des Konflikts zwischen Piltover und Zhaun.' },
+].map(t => ({ source: 'sample', seasons: null, franchise: null, poster: null, tmdbRating: null, ...t }));
+const SAMPLE_BY_ID = Object.fromEntries(SAMPLE_CATALOG.map(t => [t.id, t]));
+
+/** Online-Abschnitte (Reiter „Entdecken“). */
+const ONLINE_LISTS = {
+  now_playing: { label: 'Neu im Kino', path: '/movie/now_playing', params: { region: 'DE', language: 'de-DE' }, type: 'movie' },
+  upcoming: { label: 'Demnächst', path: '/movie/upcoming', params: { region: 'DE', language: 'de-DE' }, type: 'movie' },
+  on_the_air: { label: 'Neue Serien', path: '/tv/on_the_air', params: { language: 'de-DE' }, type: 'tv' },
+  trending: { label: 'Beliebt gerade', path: '/trending/all/week', params: { language: 'de-DE' }, type: null },
+};
+
+/* =========================================================================
+   2. HILFSFUNKTIONEN
+   ========================================================================= */
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9ß]+/g, ' ').trim();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + fmt1(Math.abs(n));
+const typeLabel = t => (t.type === 'tv' ? 'Serie' : 'Film');
+const safePath = p => (typeof p === 'string' && /^\/[A-Za-z0-9._-]+$/.test(p) ? p : null);
+
+function hashHue(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; }
+
+function timeAgo(ts) {
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1) return 'gerade eben';
+  if (m < 60) return `vor ${m} Min.`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `vor ${h} Std.`;
+  return `vor ${Math.round(h / 24)} Tg.`;
+}
+
+const ICONS = {
+  home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  spark: '<path d="M12 3l2.3 5.7L20 11l-5.7 2.3L12 19l-2.3-5.7L4 11l5.7-2.3z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  bookmark: '<path d="M6 3h12v18l-6-4-6 4z"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  download: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  upload: '<path d="M12 21V9M7 14l5-5 5 5M4 3h16"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/>',
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+};
+const icon = (name, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+
+/* =========================================================================
+   3. DATENSCHICHT – Persistenz
+   Der Store spricht nur mit einem Adapter (async load/save/clear).
+   Für einen späteren Server-Login (Supabase, Firebase …) genügt ein
+   zweiter Adapter mit derselben Schnittstelle; profile.id dient dann als
+   Schlüssel für den Nutzerdatensatz.
+   ========================================================================= */
+
+const LocalStorageAdapter = {
+  async load() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  },
+  async save(state) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); },
+  async clear() { localStorage.removeItem(STORAGE_KEY); },
+  backupCorrupt() {
+    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) localStorage.setItem(STORAGE_KEY + '.defekt', raw); } catch { /* ignorieren */ }
+  },
+};
+
+function defaultState() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    profile: { id: uid(), name: '', createdAt: Date.now() },
+    entries: {},      // titleId → { status, season, episode, rating, vote, dismissed, addedAt, updatedAt }
+    titles: {},       // eigene Titel + übernommene Online-Titel (Snapshot inkl. tmdbId)
+    interests: [],
+    meta: { updatedAt: Date.now() },
+  };
+}
+
+const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+
+/** Bringt geladene/importierte Daten in die aktuelle Form und entfernt Ungültiges. */
+function migrate(raw) {
+  const d = defaultState();
+  if (!isObj(raw)) return d;
+  const s = {
+    schemaVersion: SCHEMA_VERSION,
+    profile: { ...d.profile, ...(isObj(raw.profile) ? raw.profile : {}) },
+    entries: isObj(raw.entries) ? raw.entries : {},
+    titles: isObj(raw.titles) ? raw.titles : {},
+    interests: Array.isArray(raw.interests) ? raw.interests : [],
+    meta: { ...d.meta, ...(isObj(raw.meta) ? raw.meta : {}) },
+  };
+  s.profile.name = String(s.profile.name || '').slice(0, 40);
+  s.interests = [...new Set(s.interests.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim().slice(0, 60)))].slice(0, 100);
+  for (const [id, t] of Object.entries(s.titles)) {
+    if (!isObj(t) || typeof t.title !== 'string' || !t.title.trim()) { delete s.titles[id]; continue; }
+    t.id = id;
+    t.type = t.type === 'tv' ? 'tv' : 'movie';
+    t.source = t.source === 'tmdb' ? 'tmdb' : 'custom';
+    t.year = parseInt(t.year, 10) || null;
+    t.genres = Array.isArray(t.genres) ? t.genres.filter(g => typeof g === 'string') : [];
+    t.seasons = parseInt(t.seasons, 10) || null;
+    t.tmdbId = parseInt(t.tmdbId, 10) || null;
+    t.poster = safePath(t.poster);
+    t.franchise = typeof t.franchise === 'string' && t.franchise.trim() ? t.franchise.trim() : null;
+    t.overview = typeof t.overview === 'string' ? t.overview : '';
+    if (!isObj(t.episodes)) delete t.episodes;
+  }
+  for (const [id, e] of Object.entries(s.entries)) {
+    if (!isObj(e)) { delete s.entries[id]; continue; }
+    e.status = STATUS[e.status] ? e.status : null;
+    e.rating = clamp(parseInt(e.rating, 10) || 0, 0, 5) || null;
+    e.vote = e.vote === 'up' || e.vote === 'down' ? e.vote : null;
+    e.dismissed = !!e.dismissed;
+    e.season = Math.max(1, parseInt(e.season, 10) || 1);
+    e.episode = Math.max(1, parseInt(e.episode, 10) || 1);
+    e.addedAt = Number(e.addedAt) || Date.now();
+    e.updatedAt = Number(e.updatedAt) || e.addedAt;
+    if (!e.status && !e.rating && !e.vote && !e.dismissed) delete s.entries[id];
+  }
+  return s;
+}
+
+const Store = {
+  adapter: LocalStorageAdapter,
+  state: defaultState(),
+  listeners: new Set(),
+  loadError: false,
+
+  async init() {
+    try {
+      const raw = await this.adapter.load();
+      if (raw) this.state = migrate(raw);
+    } catch (err) {
+      console.warn('Daten konnten nicht gelesen werden', err);
+      this.adapter.backupCorrupt?.();
+      this.loadError = true;
+    }
+  },
+  /** Ändert den Zustand über eine Mutator-Funktion, speichert und benachrichtigt die Oberfläche. */
+  update(mutator) {
+    mutator(this.state);
+    this.state.meta.updatedAt = Date.now();
+    this.persist();
+    this.emit();
+  },
+  persist() {
+    this.adapter.save(this.state).catch(err => {
+      console.error(err);
+      toast('Speichern fehlgeschlagen – der Browser-Speicher ist evtl. voll.', { type: 'err' });
+    });
+  },
+  replace(next) { this.state = migrate(next); this.persist(); this.emit(); },
+  async reset() { await this.adapter.clear(); this.state = defaultState(); this.emit(); },
+  on(fn) { this.listeners.add(fn); },
+  emit() { for (const fn of this.listeners) fn(); },
+};
+
+const Settings = {
+  getToken() { try { return (localStorage.getItem(TOKEN_KEY) || '').trim(); } catch { return ''; } },
+  setToken(t) { try { localStorage.setItem(TOKEN_KEY, t.trim()); } catch { /* ignorieren */ } },
+  clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignorieren */ } },
+};
+
+/* =========================================================================
+   4. API-SCHICHT – TMDB
+   fetchTMDB() ist der einzige Ort, der mit dem Netzwerk spricht. Ein
+   Server-Proxy oder eine andere Quelle lässt sich hier austauschen, ohne
+   dass der Rest der App angepasst werden muss.
+   ========================================================================= */
+
+const Cache = {
+  get(key) {
+    try { const raw = localStorage.getItem(CACHE_PREFIX + key); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  },
+  set(key, data) {
+    const value = JSON.stringify({ ts: Date.now(), data });
+    try { localStorage.setItem(CACHE_PREFIX + key, value); }
+    catch { this.prune(); try { localStorage.setItem(CACHE_PREFIX + key, value); } catch { /* Cache ist optional */ } }
+  },
+  keys() {
+    const out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(CACHE_PREFIX)) out.push(k); } } catch { /* ignorieren */ }
+    return out;
+  },
+  /** Entfernt die ältere Hälfte der Einträge, wenn der Speicher voll ist. */
+  prune() {
+    const items = this.keys().map(k => { let ts = 0; try { ts = JSON.parse(localStorage.getItem(k)).ts || 0; } catch { /* defekt */ } return { k, ts }; });
+    items.sort((a, b) => a.ts - b.ts).slice(0, Math.ceil(items.length / 2)).forEach(({ k }) => localStorage.removeItem(k));
+  },
+  clear() { this.keys().forEach(k => localStorage.removeItem(k)); },
+};
+
+class TMDBError extends Error {
+  constructor(code, message, status) { super(message); this.code = code; this.status = status; }
+}
+
+/** Erkennt v3-API-Key (32 Hex-Zeichen) oder v4-Read-Access-Token (JWT). */
+function tmdbAuth(token) {
+  return /^[a-f0-9]{32}$/i.test(token)
+    ? { query: { api_key: token }, headers: {} }
+    : { query: {}, headers: { Authorization: `Bearer ${token}` } };
+}
+
+/**
+ * Holt Daten von TMDB.
+ * @param {string} path   z. B. '/movie/now_playing'
+ * @param {object} params Query-Parameter
+ * @param {object} opts   { ttl, force, cache, transform, timeout }
+ * @returns {Promise<{data, fetchedAt, fromCache, stale, error?}>}
+ * Bei Netzwerkfehlern wird – falls vorhanden – ein veralteter Cache-Eintrag geliefert.
+ */
+async function fetchTMDB(path, params = {}, opts = {}) {
+  const { ttl = CACHE_TTL, force = false, cache = true, transform = null, timeout = 12000 } = opts;
+  const token = Settings.getToken();
+  if (!token) throw new TMDBError('NO_KEY', 'Kein TMDB-Schlüssel hinterlegt.');
+
+  const cacheKey = path + '?' + new URLSearchParams(Object.entries(params).sort()).toString();
+  if (cache && !force) {
+    const hit = Cache.get(cacheKey);
+    if (hit && Date.now() - hit.ts < ttl) return { data: hit.data, fetchedAt: hit.ts, fromCache: true, stale: false };
+  }
+
+  const auth = tmdbAuth(token);
+  const url = new URL(TMDB_BASE + path);
+  for (const [k, v] of Object.entries({ ...params, ...auth.query })) url.searchParams.set(k, v);
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    let res;
+    try {
+      res = await fetch(url, { headers: { accept: 'application/json', ...auth.headers }, signal: ctrl.signal });
+    } catch {
+      throw new TMDBError('NETWORK', 'Keine Verbindung zu TMDB.');
+    }
+    if (!res.ok) {
+      const code = res.status === 401 ? 'AUTH' : res.status === 429 ? 'RATE' : res.status === 404 ? 'NOT_FOUND' : 'HTTP';
+      throw new TMDBError(code, `TMDB antwortet mit Status ${res.status}.`, res.status);
+    }
+    let data = await res.json();
+    if (transform) data = transform(data);
+    if (cache) Cache.set(cacheKey, data);
+    return { data, fetchedAt: Date.now(), fromCache: false, stale: false };
+  } catch (err) {
+    const e = err instanceof TMDBError ? err : new TMDBError('UNKNOWN', String(err?.message || err));
+    if (cache && e.code !== 'AUTH' && e.code !== 'NOT_FOUND') {
+      const hit = Cache.get(cacheKey);
+      if (hit) return { data: hit.data, fetchedAt: hit.ts, fromCache: true, stale: true, error: e };
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function tmdbErrorText(err) {
+  switch (err?.code) {
+    case 'NO_KEY': return 'Hinterlege deinen TMDB-Schlüssel in den Einstellungen, um aktuelle Releases zu sehen.';
+    case 'AUTH': return 'Der TMDB-Schlüssel wurde abgelehnt. Bitte prüfe ihn im Konto-Bereich.';
+    case 'RATE': return 'TMDB meldet gerade zu viele Anfragen. Bitte versuche es gleich noch einmal.';
+    case 'NETWORK': return 'Keine Verbindung zu TMDB. Prüfe deine Internetverbindung.';
+    case 'NOT_FOUND': return 'Dieser Eintrag wurde bei TMDB nicht gefunden.';
+    default: return 'TMDB ist gerade nicht erreichbar.';
+  }
+}
+
+const genreNames = ids => [...new Set((ids || []).flatMap(id => TMDB_GENRES[id] || []))];
+
+/** Ordnet einen Titel einer Reihe zu: bekannte Muster + Reihen aus eigenen Titeln. */
+function detectFranchise(t) {
+  const text = `${t.title || ''} ${t.originalTitle || ''}`;
+  const known = FRANCHISES.find(f => f.re.test(text));
+  if (known) return known.name;
+  const n = ` ${norm(text)} `;
+  for (const lt of localTitles()) {
+    if (lt.franchise && norm(lt.franchise).length >= 3 && n.includes(` ${norm(lt.franchise)} `)) return lt.franchise;
+  }
+  return null;
+}
+
+const slimResult = r => ({
+  id: r.id, media_type: r.media_type, title: r.title, name: r.name, original_title: r.original_title,
+  original_name: r.original_name, release_date: r.release_date, first_air_date: r.first_air_date,
+  genre_ids: r.genre_ids, overview: r.overview, poster_path: r.poster_path, vote_average: r.vote_average,
+  vote_count: r.vote_count, popularity: r.popularity,
+});
+
+const TMDB = {
+  /** Wandelt ein TMDB-Ergebnis in das einheitliche Titel-Format um. */
+  normalize(raw, forcedType) {
+    const type = forcedType || raw.media_type;
+    if ((type !== 'movie' && type !== 'tv') || !raw.id) return null;
+    const title = raw.title || raw.name;
+    if (!title) return null;
+    const date = (type === 'movie' ? raw.release_date : raw.first_air_date) || '';
+    const t = {
+      id: `tmdb:${type}:${raw.id}`, source: 'tmdb', tmdbId: raw.id, type, title,
+      originalTitle: raw.original_title || raw.original_name || '',
+      year: parseInt(date, 10) || null, releaseDate: date || null,
+      genres: genreNames(raw.genre_ids || (raw.genres || []).map(g => g.id)),
+      overview: raw.overview || '', poster: safePath(raw.poster_path),
+      tmdbRating: raw.vote_average ? Math.round(raw.vote_average * 10) / 10 : null,
+      tmdbVotes: raw.vote_count || 0, popularity: raw.popularity || 0, seasons: null,
+    };
+    t.franchise = detectFranchise(t);
+    return t;
+  },
+  async list(key, force = false) {
+    const def = ONLINE_LISTS[key];
+    const r = await fetchTMDB(def.path, { ...def.params, page: 1 }, {
+      force, transform: d => ({ results: (d.results || []).map(slimResult) }),
+    });
+    return { ...r, items: (r.data.results || []).map(x => TMDB.normalize(x, def.type)).filter(Boolean) };
+  },
+  details(type, id) {
+    return fetchTMDB(`/${type}/${id}`, { language: 'de-DE' }, {
+      ttl: 7 * DAY,
+      transform: d => ({
+        id: d.id, title: d.title, name: d.name, release_date: d.release_date, first_air_date: d.first_air_date,
+        poster_path: d.poster_path, vote_average: d.vote_average, vote_count: d.vote_count, overview: d.overview,
+        genres: d.genres, number_of_seasons: d.number_of_seasons, runtime: d.runtime, tagline: d.tagline,
+        seasons: (d.seasons || []).map(s => ({ season_number: s.season_number, episode_count: s.episode_count })),
+      }),
+    });
+  },
+  providers(type, id) {
+    return fetchTMDB(`/${type}/${id}/watch/providers`, {}, {
+      ttl: DAY, transform: d => ({ id: d.id, results: { DE: d.results?.DE || null } }),
+    });
+  },
+  async search(query) {
+    const r = await fetchTMDB('/search/multi', { query, language: 'de-DE', include_adult: 'false', page: 1 }, {
+      transform: d => ({ results: (d.results || []).filter(x => x.media_type === 'movie' || x.media_type === 'tv').map(slimResult) }),
+    });
+    return (r.data.results || []).map(x => TMDB.normalize(x)).filter(Boolean);
+  },
+};
+
+/** Laufzeit-Speicher für online geladene Titel (nicht persistent; dafür gibt es den Cache). */
+const Runtime = {
+  titles: new Map(),
+  tags: new Map(),
+  add(t, tag) {
+    this.titles.set(t.id, t);
+    if (tag) this.tag(t.id, tag);
+  },
+  tag(id, tag) {
+    if (!this.tags.has(id)) this.tags.set(id, new Set());
+    this.tags.get(id).add(tag);
+  },
+};
+
+const Online = {
+  lists: {},
+  async load(key, force = false) {
+    const st = this.lists[key] || (this.lists[key] = { items: [], fetchedAt: null, stale: false, error: null, loading: false });
+    st.loading = true;
+    st.error = null;
+    try {
+      const r = await TMDB.list(key, force);
+      r.items.forEach(t => Runtime.add(t, key));
+      st.items = r.items;
+      st.fetchedAt = r.fetchedAt;
+      st.fromCache = r.fromCache;
+      st.stale = r.stale;
+      st.error = r.error || null;
+    } catch (err) {
+      st.error = err;
+    } finally {
+      st.loading = false;
+    }
+    return st;
+  },
+  async loadAll(force = false) {
+    if (!Settings.getToken()) return;
+    for (const key of Object.keys(ONLINE_LISTS)) {
+      const st = this.lists[key] || (this.lists[key] = { items: [], fetchedAt: null, stale: false, error: null, loading: true });
+      st.loading = true;
+    }
+    App.softRender();
+    await Promise.allSettled(Object.keys(ONLINE_LISTS).map(k => this.load(k, force)));
+    App.softRender();
+  },
+  anyError() {
+    return Object.values(this.lists).find(l => l.error && !l.items.length)?.error || null;
+  },
+};
+
+/** Übernimmt Details (Poster, Staffeln, Folgen pro Staffel …) in einen Titel. */
+function applyDetails(t, d) {
+  const date = d.release_date || d.first_air_date;
+  const y = parseInt(date, 10) || null;
+  if (t.source === 'sample' && !t._verified) {
+    // Schutz gegen falsche IDs im Beispielkatalog: Jahr muss passen
+    if (y && t.year && Math.abs(y - t.year) > 1) { t.tmdbId = null; return false; }
+    t._verified = true;
+  }
+  const patch = {};
+  if (safePath(d.poster_path)) patch.poster = d.poster_path;
+  if (d.vote_average) { patch.tmdbRating = Math.round(d.vote_average * 10) / 10; patch.tmdbVotes = d.vote_count || 0; }
+  if (t.type === 'tv' && d.number_of_seasons) patch.seasons = d.number_of_seasons;
+  if (t.type === 'tv' && d.seasons?.length) {
+    patch.episodes = Object.fromEntries(d.seasons.filter(s => s.season_number > 0 && s.episode_count).map(s => [s.season_number, s.episode_count]));
+  }
+  if (!(t.genres || []).length && d.genres?.length) patch.genres = genreNames(d.genres.map(g => g.id));
+  if (!t.overview && d.overview) patch.overview = d.overview;
+  Object.assign(t, patch);
+  const stored = Store.state.titles[t.id];
+  if (stored && stored !== t) Object.assign(stored, patch);
+  if (stored) Store.persist();
+  return true;
+}
+
+/** Holt einmalig Poster & Staffeldaten für den Beispielkatalog (7 Tage gecacht). */
+async function enrichCatalog() {
+  if (!Settings.getToken()) return;
+  const todo = SAMPLE_CATALOG.filter(t => t.tmdbId && !t._verified);
+  let changed = false;
+  let i = 0;
+  const worker = async () => {
+    while (i < todo.length) {
+      const t = todo[i++];
+      try { const r = await TMDB.details(t.type, t.tmdbId); if (applyDetails(t, r.data)) changed = true; }
+      catch (err) { if (err.code === 'AUTH' || err.code === 'NO_KEY') return; }
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  if (changed) App.softRender();
+}
+
+/* =========================================================================
+   5. BIBLIOTHEK – Titel & Einträge
+   ========================================================================= */
+
+const localTitles = () => [...SAMPLE_CATALOG, ...Object.values(Store.state.titles)];
+const getTitle = id => SAMPLE_BY_ID[id] || Store.state.titles[id] || Runtime.titles.get(id) || null;
+const getEntry = id => Store.state.entries[id] || null;
+const tmdbKey = t => (t.tmdbId ? `${t.type}:${t.tmdbId}` : null);
+const titleKey = t => `${t.type}|${norm(t.title)}|${t.year || ''}`;
+
+/** Findet zu einem Online-Titel den passenden lokalen Titel (gleiche TMDB-ID oder Titel+Jahr). */
+function resolveLocal(t) {
+  if (!t || SAMPLE_BY_ID[t.id] || Store.state.titles[t.id]) return t;
+  const k1 = tmdbKey(t), k2 = titleKey(t);
+  return localTitles().find(l => (k1 && tmdbKey(l) === k1) || titleKey(l) === k2) || t;
+}
+
+function snapshot(t) {
+  const keys = ['id', 'source', 'type', 'title', 'originalTitle', 'year', 'releaseDate', 'genres', 'overview', 'poster',
+    'tmdbRating', 'tmdbVotes', 'popularity', 'tmdbId', 'seasons', 'episodes', 'franchise'];
+  return Object.fromEntries(keys.filter(k => t[k] !== undefined).map(k => [k, t[k]]));
+}
+
+/** Setzt/ändert einen Listeneintrag. Online-Titel werden dabei inkl. TMDB-ID gespeichert. */
+function setEntry(title, patch) {
+  const t = resolveLocal(title);
+  Store.update(s => {
+    if (!SAMPLE_BY_ID[t.id] && !s.titles[t.id]) s.titles[t.id] = snapshot(t);
+    const prev = s.entries[t.id] || { status: null, season: 1, episode: 1, rating: null, vote: null, dismissed: false, addedAt: Date.now() };
+    const e = { ...prev, ...patch, updatedAt: Date.now() };
+    if (patch.status) e.dismissed = false;
+    if (!e.status && !e.rating && !e.vote && !e.dismissed) {
+      delete s.entries[t.id];
+      if (s.titles[t.id]?.source === 'tmdb') delete s.titles[t.id];
+    } else {
+      s.entries[t.id] = e;
+    }
+  });
+  return t;
+}
+
+/** Stellt einen früheren Eintrag wieder her (für „Rückgängig“). */
+function restoreEntry(t, prev) {
+  Store.update(s => {
+    if (prev) {
+      if (!SAMPLE_BY_ID[t.id] && !s.titles[t.id]) s.titles[t.id] = snapshot(t);
+      s.entries[t.id] = prev;
+    } else {
+      delete s.entries[t.id];
+      if (s.titles[t.id]?.source === 'tmdb') delete s.titles[t.id];
+    }
+  });
+}
+
+function entriesWith(pred) {
+  return Object.entries(Store.state.entries)
+    .map(([id, e]) => ({ t: getTitle(id), e }))
+    .filter(x => x.t && pred(x.e))
+    .sort((a, b) => b.e.updatedAt - a.e.updatedAt);
+}
+
+const isRejected = e => e.dismissed || (e.vote === 'down' && !e.status);
+
+/* =========================================================================
+   6. EMPFEHLUNGS-ALGORITHMUS
+   Nachvollziehbare Punktwertung – jeder Bestandteil wird mit Begründung
+   gespeichert und in der Detailansicht angezeigt.
+   ========================================================================= */
+
+const WEIGHTS = {
+  genre: 2.0,             // × Genre-Neigung
+  franchise: 3.0,         // × Reihen-Neigung
+  interestTitle: 3.5,     // Interesse trifft Titel oder Reihe
+  interestGenre: 2.0,     // Interesse trifft Genre
+  interestText: 1.0,      // Interesse steht in der Beschreibung
+  recency: [1.0, 0.7, 0.4, 0.2], // dieses Jahr / letztes Jahr / vor 2 Jahren / bis 5 Jahre
+  quality: 0.25,          // × (TMDB-Note − 6,5), begrenzt auf −0,5 … +0,8
+  shrink: 1,              // Glättung: Neigung = Summe ÷ (Anzahl + 1)
+};
+
+const TAGS = {
+  now_playing: { bonus: 0.4, label: 'Läuft im Kino', reason: 'jetzt im Kino' },
+  upcoming: { bonus: 0.3, label: 'Erscheint bald', reason: 'demnächst' },
+  on_the_air: { bonus: 0.3, label: 'Neue Folgen', reason: 'neue Folgen' },
+  trending: { bonus: 0.4, label: 'Gerade beliebt', reason: 'gerade beliebt' },
+};
+
+/** Wie stark ein Eintrag den Geschmack beeinflusst (−4 … +3,5). */
+function entrySignal(e) {
+  let s = 0;
+  if (e.rating) s += e.rating - 3;           // 1★ = −2 … 5★ = +2
+  if (e.vote === 'up') s += 1.5;
+  if (e.vote === 'down') s -= 2;
+  if (!e.rating && !e.vote) {                 // nur Status → schwaches Signal
+    if (e.status === 'paused') s += 0.75;
+    else if (e.status === 'seen') s += 0.5;
+    else if (e.status === 'watchlist') s += 0.4;
+    else if (e.dismissed) s -= 0.5;
+  }
+  return s;
+}
+
+function buildProfile() {
+  const genres = {}, franchises = {};
+  let count = 0;
+  for (const [id, e] of Object.entries(Store.state.entries)) {
+    const t = getTitle(id);
+    if (!t) continue;
+    const s = entrySignal(e);
+    if (!s) continue;
+    count++;
+    for (const g of t.genres || []) { const x = genres[g] || (genres[g] = { sum: 0, n: 0 }); x.sum += s; x.n++; }
+    if (t.franchise) { const k = norm(t.franchise); const x = franchises[k] || (franchises[k] = { name: t.franchise, sum: 0, n: 0 }); x.sum += s; x.n++; }
+  }
+  const weightOf = x => (x ? x.sum / (x.n + WEIGHTS.shrink) : 0);
+  return {
+    genres, franchises, count,
+    genreWeight: g => weightOf(genres[g]),
+    franchiseWeight: f => weightOf(franchises[norm(f)]),
+  };
+}
+
+function interestGenre(q) { return GENRE_SYNONYMS[q] || GENRES.find(g => norm(g) === q) || null; }
+
+/** Prüft, ob ein Interesse zu einem Titel passt – stärkster Treffer gewinnt. */
+function matchInterest(interest, t) {
+  const q = norm(interest);
+  if (q.length < 2) return null;
+  const genre = interestGenre(q);
+  if (genre) return (t.genres || []).includes(genre) ? { kind: 'genre', genre, value: WEIGHTS.interestGenre } : null;
+  const titleText = ` ${norm(t.title)} ${norm(t.originalTitle)} `;
+  if (q.length >= 3 && titleText.includes(` ${q}`)) return { kind: 'title', value: WEIGHTS.interestTitle };
+  if (t.franchise) {
+    const f = norm(t.franchise);
+    if (f === q || ` ${f} `.includes(` ${q} `) || ` ${q} `.includes(` ${f} `)) return { kind: 'franchise', value: WEIGHTS.interestTitle };
+  }
+  if (q.length >= 4 && ` ${norm(t.overview)} `.includes(` ${q} `)) return { kind: 'text', value: WEIGHTS.interestText };
+  return null;
+}
+
+const tagsFor = t => [...(Runtime.tags.get(t.id) || [])];
+
+/** Bewertet einen Titel. Liefert Punktzahl, Einzelposten und bis zu 3 Begründungen. */
+function scoreTitle(t, profile, interests = Store.state.interests) {
+  const parts = [];
+  const genres = t.genres || [];
+
+  if (genres.length && profile.count) {
+    let sum = 0, best = null, bestW = 0;
+    for (const g of genres) { const w = profile.genreWeight(g); sum += w; if (w > bestW) { bestW = w; best = g; } }
+    const v = (sum / Math.sqrt(genres.length)) * WEIGHTS.genre;
+    if (Math.abs(v) >= 0.05) parts.push({ label: `Genres (${genres.slice(0, 3).join(', ')})`, value: v, reason: v > 0.3 && best ? `passt zu ${best}` : null });
+  }
+  if (t.franchise) {
+    const w = profile.franchiseWeight(t.franchise);
+    if (w) parts.push({ label: `Reihe: ${t.franchise}`, value: w * WEIGHTS.franchise, reason: w > 0 ? `weil du ${t.franchise} magst` : null });
+  }
+  for (const i of interests) {
+    const m = matchInterest(i, t);
+    if (!m) continue;
+    const reason = m.kind === 'genre' ? `passt zu ${m.genre}` : m.kind === 'text' ? `Thema: ${i}` : `weil du ${i} magst`;
+    parts.push({ label: `Interesse „${i}“`, value: m.value, reason });
+  }
+  if (t.year) {
+    const age = CURRENT_YEAR - t.year;
+    const v = age <= 0 ? WEIGHTS.recency[0] : age === 1 ? WEIGHTS.recency[1] : age === 2 ? WEIGHTS.recency[2] : age <= 5 ? WEIGHTS.recency[3] : 0;
+    if (v) parts.push({ label: `Erscheinungsjahr ${t.year}`, value: v, reason: age <= 1 ? 'neu' : null });
+  }
+  if (t.tmdbRating && (t.tmdbVotes ?? 100) >= 20) {
+    const v = clamp((t.tmdbRating - 6.5) * WEIGHTS.quality, -0.5, 0.8);
+    if (Math.abs(v) >= 0.05) parts.push({ label: `TMDB-Note ${fmt1(t.tmdbRating)}`, value: v, reason: t.tmdbRating >= 8 ? 'top bewertet' : null });
+  }
+  for (const tag of tagsFor(t)) {
+    const def = TAGS[tag];
+    if (def) parts.push({ label: def.label, value: def.bonus, reason: def.reason });
+  }
+
+  const score = parts.reduce((a, p) => a + p.value, 0);
+  const reasons = [...new Set(parts.filter(p => p.reason && p.value > 0).sort((a, b) => b.value - a.value).map(p => p.reason))].slice(0, 3);
+  if (!reasons.length) reasons.push(genres.length ? `${genres[0]} zum Entdecken` : 'zum Entdecken');
+  return { title: t, score, parts, reasons };
+}
+
+/** Alle Kandidaten: lokaler Katalog + Online-Titel, Dubletten zusammengeführt. */
+function candidatePool() {
+  const out = [];
+  const byKey = new Map();
+  const keysOf = t => [tmdbKey(t), titleKey(t)].filter(Boolean);
+  for (const t of localTitles()) { out.push(t); keysOf(t).forEach(k => byKey.set(k, t)); }
+  for (const t of Runtime.titles.values()) {
+    if (Store.state.titles[t.id]) continue;
+    const dup = keysOf(t).map(k => byKey.get(k)).find(Boolean);
+    if (dup) { tagsFor(t).forEach(tag => Runtime.tag(dup.id, tag)); continue; }
+    out.push(t);
+    keysOf(t).forEach(k => byKey.set(k, t));
+  }
+  return out;
+}
+
+/** Empfehlungen: alles, was noch nicht in der Liste ist (gesehen, pausiert, Merkliste, abgelehnt), nach Punkten sortiert. */
+function recommend(limit = 24) {
+  const profile = buildProfile();
+  const recs = candidatePool()
+    .filter(t => !getEntry(t.id))
+    .map(t => scoreTitle(t, profile))
+    .sort((a, b) => b.score - a.score || (b.title.popularity || 0) - (a.title.popularity || 0));
+  return { profile, recs: recs.slice(0, limit) };
+}
+
+/* =========================================================================
+   7. DARSTELLUNG – Komponenten
+   ========================================================================= */
+
+const UI = {
+  view: 'start',
+  discoverTab: 'now_playing',
+  listFilter: 'all',
+  listSort: 'updated',
+  catalogQuery: '',
+  catalogType: 'all',
+  catalogGenre: '',
+  showProfile: false,
+  showToken: false,
+  modal: null,          // { id, providers: { state, data } }
+  dialogClose: null,
+  search: { query: '', items: [], loading: false, error: null },
+};
+
+function posterHTML(t, size = 'w342') {
+  const hue = hashHue(t.title);
+  const ph = `<div class="ph" style="background:linear-gradient(160deg,hsl(${hue} 50% 30%),hsl(${(hue + 50) % 360} 55% 12%))"><span>${esc(t.title)}</span></div>`;
+  const p = safePath(t.poster);
+  return p ? `${ph}<img src="${TMDB_IMG}${size}${p}" alt="" loading="lazy" onerror="this.remove()">` : ph;
+}
+
+function cardHTML(t, { rec = null, quick = false, overview = false, hideReason = null } = {}) {
+  const e = getEntry(t.id);
+  const reasons = rec ? rec.reasons.filter(r => r !== hideReason) : [];
+  return `<article class="card" data-action="open" data-id="${esc(t.id)}" tabindex="0" aria-label="${esc(t.title)}">
+    <div class="poster">${posterHTML(t)}
+      <span class="badge type">${typeLabel(t)}</span>
+      ${t.tmdbRating ? `<span class="badge score">★ ${fmt1(t.tmdbRating)}</span>` : ''}
+      ${e?.status ? `<span class="badge status s-${e.status}">${STATUS_ICON[e.status]} ${STATUS[e.status]}</span>` : ''}
+      ${quick && !e ? `<div class="quick">
+        <button data-action="quick-watchlist" data-id="${esc(t.id)}" title="Auf die Merkliste" aria-label="Auf die Merkliste">${icon('bookmark')}</button>
+        <button data-action="quick-dismiss" data-id="${esc(t.id)}" title="Nicht interessiert" aria-label="Nicht interessiert">👎</button>
+      </div>` : ''}
+    </div>
+    <div class="card-body">
+      <h3>${esc(t.title)}</h3>
+      <div class="meta">${t.year || '—'}${t.genres?.length ? ' · ' + esc(t.genres.slice(0, 2).join(', ')) : ''}</div>
+      ${overview && t.overview ? `<p class="ov">${esc(t.overview)}</p>` : ''}
+      ${reasons.length ? `<div class="reasons">${reasons.map(r => `<span class="reason">${esc(r)}</span>`).join('')}</div>` : ''}
+    </div>
+  </article>`;
+}
+
+const skeletonGrid = (n = 10) => `<div class="grid">${Array.from({ length: n }, () => `<div class="card skeleton"><div class="poster"></div><div class="card-body"><div class="sk-line" style="width:80%"></div><div class="sk-line" style="width:50%"></div></div></div>`).join('')}</div>`;
+
+function starsHTML(id, rating) {
+  return `<div class="stars" role="group" aria-label="Bewertung">${[1, 2, 3, 4, 5].map(n =>
+    `<button data-action="rate" data-id="${esc(id)}" data-value="${n}" class="${n <= (rating || 0) ? 'on' : ''}" aria-label="${n} von 5 Sternen" aria-pressed="${n === rating}">★</button>`).join('')}</div>`;
+}
+
+function thumbsHTML(id, vote) {
+  return `<div class="thumbs">
+    <button data-action="vote" data-id="${esc(id)}" data-value="up" class="${vote === 'up' ? 'on-up' : ''}" aria-pressed="${vote === 'up'}" title="Gefällt mir">👍</button>
+    <button data-action="vote" data-id="${esc(id)}" data-value="down" class="${vote === 'down' ? 'on-down' : ''}" aria-pressed="${vote === 'down'}" title="Gefällt mir nicht">👎</button>
+  </div>`;
+}
+
+function emptyHTML(emoji, title, text, btn = '') {
+  return `<div class="empty"><div class="big">${emoji}</div><h3>${esc(title)}</h3><p>${text}</p>${btn}</div>`;
+}
+
+function progressInfo(t, e) {
+  if (!t.seasons) return null;
+  const count = t.episodes?.[e.season];
+  const frac = count ? Math.min(e.episode / count, 1) : 0;
+  return clamp(((e.season - 1) + frac) / t.seasons * 100, 2, 100);
+}
+
+function continueCardHTML({ t, e }) {
+  const id = esc(t.id);
+  const pct = t.type === 'tv' ? progressInfo(t, e) : null;
+  const count = t.episodes?.[e.season];
+  return `<div class="cont-card">
+    <div class="cont-poster" data-action="open" data-id="${id}">${posterHTML(t, 'w185')}</div>
+    <div class="cont-body">
+      <h3 data-action="open" data-id="${id}" title="${esc(t.title)}">${esc(t.title)}</h3>
+      <div class="where">${t.type === 'tv' ? `Staffel ${e.season} · Folge ${e.episode}${count ? `<span class="faint"> / ${count}</span>` : ''}` : 'Film pausiert'}</div>
+      ${t.type === 'tv' ? `<div class="meta">${t.seasons ? `${t.seasons} Staffel${t.seasons > 1 ? 'n' : ''}` : 'Serie'}</div>` : `<div class="meta">${esc(t.genres.slice(0, 2).join(', '))}</div>`}
+      ${pct != null ? `<div class="progress" title="Fortschritt"><span style="width:${pct.toFixed(1)}%"></span></div>` : ''}
+      <div class="cont-actions">
+        ${t.type === 'tv' ? `<button class="btn sm" data-action="ep-step" data-id="${id}" data-value="1">+1 Folge</button>
+        <button class="btn sm ghost" data-action="season-step" data-id="${id}" data-value="1">Nächste Staffel</button>` : ''}
+        <button class="btn sm ghost" data-action="mark-seen" data-id="${id}">✓ Fertig</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function noKeyNotice(extra = '') {
+  return `<div class="notice"><span class="ico">💡</span><div class="grow"><b>Aktuelle Releases freischalten</b><br>
+    Mit einem kostenlosen TMDB-Schlüssel siehst du neue Kinofilme, Serien und Streaming-Anbieter. ${extra}
+    <div><a class="btn sm" href="#konto">Schlüssel eintragen</a></div></div></div>`;
+}
+
+/* =========================================================================
+   8. DARSTELLUNG – Ansichten
+   ========================================================================= */
+
+function renderHome() {
+  const s = Store.state;
+  const name = s.profile.name;
+  const paused = entriesWith(e => e.status === 'paused');
+  const { profile, recs } = recommend(24);
+  const count = st => Object.values(s.entries).filter(e => e.status === st).length;
+  const rated = Object.values(s.entries).filter(e => e.rating || e.vote).length;
+  const hasKey = !!Settings.getToken();
+  const onlineErr = hasKey ? Online.anyError() : null;
+  const loading = hasKey && Object.values(Online.lists).some(l => l.loading);
+
+  return `
+  <section class="hero">
+    <div>
+      <h1>${name ? `Hallo, ${esc(name)} 👋` : 'Willkommen bei CineMatch'}</h1>
+      <p>${rated ? 'Deine Vorschläge werden mit jeder Bewertung genauer.' : 'Bewerte Filme und Serien – CineMatch lernt deinen Geschmack.'}</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>${count('seen')}</b><span>Gesehen</span></div>
+      <div class="stat"><b>${count('paused')}</b><span>Pausiert</span></div>
+      <div class="stat"><b>${count('watchlist')}</b><span>Merkliste</span></div>
+      <div class="stat"><b>${rated}</b><span>Bewertet</span></div>
+    </div>
+  </section>
+
+  ${!hasKey ? noKeyNotice('Bis dahin empfiehlt CineMatch aus dem lokalen Katalog.') : ''}
+  ${onlineErr ? `<div class="notice warn"><span class="ico">📡</span><div class="grow">${esc(tmdbErrorText(onlineErr))} Die Empfehlungen stammen vorerst aus dem lokalen Katalog.</div></div>` : ''}
+
+  ${paused.length ? `<section class="section">
+    <div class="section-head"><div><h2>Weiter schauen</h2><p>Hier hast du aufgehört</p></div></div>
+    <div class="row-scroll">${paused.map(continueCardHTML).join('')}</div>
+  </section>` : ''}
+
+  <section class="section">
+    <div class="section-head">
+      <div><h2>Empfohlen für dich</h2>
+        <p>${profile.count ? `Basierend auf ${profile.count} Bewertung${profile.count === 1 ? '' : 'en'}/Einträgen${s.interests.length ? ` und ${s.interests.length} Interesse${s.interests.length === 1 ? '' : 'n'}` : ''}` : s.interests.length ? `Basierend auf deinen Interessen – bewerte Titel für mehr Genauigkeit` : 'Noch allgemein – bewerte ein paar Titel oder trage Interessen ein'}${loading ? ' · lade Online-Titel …' : ''}</p>
+      </div>
+      <button class="btn sm ghost" data-action="toggle-profile" aria-expanded="${UI.showProfile}">${UI.showProfile ? 'Erklärung ausblenden' : 'So entstehen die Vorschläge'}</button>
+    </div>
+    ${UI.showProfile ? profilePanelHTML(profile) : ''}
+    ${recs.length
+      ? `<div class="grid">${recs.map(r => cardHTML(r.title, { rec: r, quick: true })).join('')}</div>`
+      : emptyHTML('🎬', 'Alles gesehen!', 'Du hast jeden Titel im Katalog bewertet oder eingetragen. Füge eigene Titel hinzu oder verbinde TMDB für Nachschub.', '<a class="btn" href="#katalog">Zum Katalog</a>')}
+  </section>`;
+}
+
+function profilePanelHTML(profile) {
+  const genres = Object.keys(profile.genres).map(g => ({ g, w: profile.genreWeight(g), n: profile.genres[g].n }))
+    .sort((a, b) => Math.abs(b.w) - Math.abs(a.w)).slice(0, 8);
+  const franchises = Object.values(profile.franchises).map(f => ({ name: f.name, w: profile.franchiseWeight(f.name) }))
+    .filter(f => f.w).sort((a, b) => b.w - a.w).slice(0, 6);
+  const maxW = Math.max(1, ...genres.map(x => Math.abs(x.w)));
+  const bar = w => `<div class="bar"><span class="${w >= 0 ? 'pos' : 'neg'}" style="width:${(Math.abs(w) / maxW * 50).toFixed(1)}%"></span></div>`;
+  return `<div class="panel profile-panel">
+    <div>
+      <h3>Dein Geschmacksprofil</h3>
+      ${genres.length ? `<div class="bars">${genres.map(x => `<div class="bar-row"><span>${esc(x.g)}</span>${bar(x.w)}<span class="v">${signed(x.w)}</span></div>`).join('')}</div>`
+        : '<p class="muted small">Noch keine Daten. Bewerte Titel mit Sternen oder 👍/👎.</p>'}
+      ${franchises.length ? `<h3 style="margin-top:16px">Reihen</h3><div class="chips">${franchises.map(f => `<span class="chip ${f.w > 0 ? 'accent' : ''}">${esc(f.name)} ${signed(f.w)}</span>`).join('')}</div>` : ''}
+      ${Store.state.interests.length ? `<h3 style="margin-top:16px">Interessen</h3><div class="chips">${Store.state.interests.map(i => `<span class="chip accent">${esc(i)}</span>`).join('')}</div>` : ''}
+    </div>
+    <div>
+      <h3>Gewichtung</h3>
+      <ul class="rules">
+        <li><b>Signal pro Titel:</b> Sterne − 3 (1★ = −2 … 5★ = +2), 👍 +1,5, 👎 −2. Ohne Bewertung: gesehen +0,5, pausiert +0,75, Merkliste +0,4, „nicht interessiert“ −0,5.</li>
+        <li><b>Genre-/Reihen-Neigung</b> = Summe der Signale ÷ (Anzahl + 1). Je mehr du bewertest, desto verlässlicher werden die Werte.</li>
+        <li><b>Punkte</b> = Genre-Neigung × 2 + Reihen-Neigung × 3 + Interessen (Titel/Reihe +3,5, Genre +2, Beschreibung +1) + Aktualität (bis +1) + TMDB-Note (−0,5 … +0,8) + Online-Bonus (Kino/Trend bis +0,4).</li>
+        <li><b>Ausgeschlossen:</b> alles, was in deiner Liste ist – gesehen, pausiert, Merkliste oder abgelehnt.</li>
+      </ul>
+    </div>
+  </div>`;
+}
+
+function renderDiscover() {
+  const hasKey = !!Settings.getToken();
+  const tab = UI.discoverTab;
+  const st = Online.lists[tab];
+  const anyLoading = Object.values(Online.lists).some(l => l.loading);
+  const tabs = `<div class="tabs-scroll"><div class="seg" role="tablist">${Object.entries(ONLINE_LISTS).map(([k, d]) =>
+    `<button role="tab" aria-selected="${k === tab}" class="${k === tab ? 'on' : ''}" data-action="disc-tab" data-value="${k}">${d.label}</button>`).join('')}</div></div>`;
+  const head = `<div class="page-head"><div><h1>Entdecken</h1><p>Aktuelle Filme und Serien von TMDB – passend bewertet für dich.</p></div>
+    ${hasKey ? `<button class="btn" data-action="refresh" ${anyLoading ? 'disabled' : ''}>${icon('refresh', 'i' + (anyLoading ? ' spin' : ''))} Aktualisieren</button>` : ''}</div>`;
+
+  const profile = buildProfile();
+  const localFallback = title => {
+    const items = candidatePool().filter(t => t.source !== 'tmdb' && !getEntry(t.id)).map(t => scoreTitle(t, profile)).sort((a, b) => b.score - a.score);
+    return `<div class="section-head"><div><h2>${title}</h2><p>${items.length} Titel, die noch nicht in deiner Liste sind</p></div></div>
+      <div class="grid">${items.map(r => cardHTML(r.title, { rec: r, quick: true })).join('')}</div>`;
+  };
+
+  if (!hasKey) return head + noKeyNotice() + localFallback('Aus dem lokalen Katalog');
+  let body;
+  if (!st || (st.loading && !st.items.length)) {
+    body = skeletonGrid(12);
+  } else if (st.error && !st.items.length) {
+    body = `<div class="notice err"><span class="ico">⚠️</span><div class="grow">${esc(tmdbErrorText(st.error))}
+      <div><button class="btn sm" data-action="refresh">Erneut versuchen</button>${st.error.code === 'AUTH' ? ' <a class="btn sm ghost" href="#konto">Schlüssel prüfen</a>' : ''}</div></div></div>`
+      + localFallback('Solange: aus dem lokalen Katalog');
+  } else {
+    const hide = TAGS[tab]?.reason;
+    const cards = st.items.map(item => {
+      const local = resolveLocal(item);
+      const shown = local === item ? item : { ...item, id: local.id };
+      return cardHTML(shown, { rec: scoreTitle(local, profile), quick: true, overview: true, hideReason: hide });
+    });
+    body = `<div class="result-meta">${st.items.length} Titel <span class="dot"></span> ${st.fetchedAt ? `Stand ${timeAgo(st.fetchedAt)}` : ''}${st.fromCache && !st.stale ? ' (aus dem Zwischenspeicher)' : ''}</div>
+      ${st.stale ? `<div class="notice warn"><span class="ico">📡</span><div class="grow">${esc(tmdbErrorText(st.error))} Angezeigt werden zwischengespeicherte Daten.</div></div>` : ''}
+      ${st.items.length ? `<div class="grid">${cards.join('')}</div>` : emptyHTML('🍿', 'Keine Titel', 'TMDB hat für diesen Bereich gerade nichts geliefert.')}`;
+  }
+  return head + tabs + `<div style="margin-top:16px">${body}</div>`;
+}
+
+function renderList() {
+  const all = entriesWith(() => true);
+  const filters = {
+    all: { label: 'Alle', pred: e => !isRejected(e) },
+    paused: { label: 'Pausiert', pred: e => e.status === 'paused' },
+    seen: { label: 'Gesehen', pred: e => e.status === 'seen' },
+    watchlist: { label: 'Merkliste', pred: e => e.status === 'watchlist' },
+    rejected: { label: 'Abgelehnt', pred: isRejected },
+  };
+  const f = filters[UI.listFilter] || filters.all;
+  let rows = all.filter(x => f.pred(x.e));
+  if (UI.listSort === 'title') rows.sort((a, b) => a.t.title.localeCompare(b.t.title, 'de'));
+  if (UI.listSort === 'rating') rows.sort((a, b) => (b.e.rating || 0) - (a.e.rating || 0) || (b.e.vote === 'up') - (a.e.vote === 'up'));
+  if (UI.listSort === 'year') rows.sort((a, b) => (b.t.year || 0) - (a.t.year || 0));
+
+  return `<div class="page-head"><div><h1>Meine Liste</h1><p>Status, Fortschritt und Bewertungen – alles an einem Ort.</p></div>
+      <a class="btn" href="#katalog">${icon('plus')} Titel hinzufügen</a></div>
+    <div class="toolbar">
+      <div class="tabs-scroll"><div class="seg">${Object.entries(filters).map(([k, d]) =>
+        `<button class="${k === UI.listFilter ? 'on' : ''}" data-action="list-filter" data-value="${k}">${d.label} <span class="count">${all.filter(x => d.pred(x.e)).length}</span></button>`).join('')}</div></div>
+      <select class="input" data-change="list-sort" aria-label="Sortierung" style="width:auto">
+        ${[['updated', 'Zuletzt geändert'], ['title', 'Titel A–Z'], ['rating', 'Bewertung'], ['year', 'Erscheinungsjahr']].map(([v, l]) => `<option value="${v}" ${UI.listSort === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    ${rows.length ? `<div class="list">${rows.map(listRowHTML).join('')}</div>`
+      : emptyHTML(UI.listFilter === 'rejected' ? '🙅' : '📼', UI.listFilter === 'rejected' ? 'Nichts abgelehnt' : 'Hier ist noch nichts',
+        UI.listFilter === 'rejected' ? 'Titel, die du mit 👎 oder „Nicht interessiert“ markierst, landen hier.' : 'Öffne einen Titel und setze einen Status, um ihn hier zu sehen.',
+        '<a class="btn primary" href="#katalog">Katalog durchsuchen</a>')}`;
+}
+
+function listRowHTML({ t, e }) {
+  const id = esc(t.id);
+  const rejected = isRejected(e);
+  return `<div class="lrow">
+    <div class="lthumb" data-action="open" data-id="${id}">${posterHTML(t, 'w185')}</div>
+    <div class="linfo">
+      <div class="ltitle" data-action="open" data-id="${id}">${esc(t.title)}</div>
+      <div class="meta">${typeLabel(t)} · ${t.year || '—'}${t.genres.length ? ' · ' + esc(t.genres.slice(0, 3).join(', ')) : ''}${t.source === 'tmdb' ? ' · TMDB' : t.source === 'custom' ? ' · eigener Titel' : ''}</div>
+      <div class="lcontrols">
+        ${rejected ? `<span class="chip">${e.dismissed ? 'Nicht interessiert' : '👎 Gefällt mir nicht'}</span>
+          <button class="btn sm" data-action="restore" data-id="${id}">Wieder vorschlagen</button>` : `
+        <select class="input sm" data-change="status" data-id="${id}" aria-label="Status">
+          <option value="" ${!e.status ? 'selected' : ''}>– kein Status –</option>
+          ${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${e.status === k ? 'selected' : ''}>${STATUS_ICON[k]} ${l}</option>`).join('')}
+        </select>
+        ${t.type === 'tv' && e.status ? `<label class="se">Staffel <input type="number" inputmode="numeric" min="1" ${t.seasons ? `max="${t.seasons}"` : ''} value="${e.season}" data-change="season" data-id="${id}"></label>
+          <label class="se">Folge <input type="number" inputmode="numeric" min="1" value="${e.episode}" data-change="episode" data-id="${id}"></label>` : ''}
+        ${starsHTML(t.id, e.rating)}
+        ${thumbsHTML(t.id, e.vote)}`}
+      </div>
+    </div>
+    <button class="btn icon ghost" data-action="remove" data-id="${id}" title="Aus der Liste entfernen" aria-label="Aus der Liste entfernen">${icon('x')}</button>
+  </div>`;
+}
+
+function renderCatalog() {
+  const hasKey = !!Settings.getToken();
+  return `<div class="page-head"><div><h1>Katalog</h1><p>Alle Filme und Serien – durchsuchen, filtern, eigene ergänzen.</p></div>
+      <button class="btn primary" data-action="add-title">${icon('plus')} Eigener Titel</button></div>
+    <div class="toolbar">
+      <div class="search">${icon('search')}<input id="cat-q" class="input" type="search" placeholder="${hasKey ? 'Titel suchen – auch online bei TMDB …' : 'Titel, Genre oder Reihe suchen …'}" value="${esc(UI.catalogQuery)}" autocomplete="off" aria-label="Suche"></div>
+      <div class="seg">${[['all', 'Alle'], ['movie', 'Filme'], ['tv', 'Serien']].map(([v, l]) => `<button class="${UI.catalogType === v ? 'on' : ''}" data-action="cat-type" data-value="${v}">${l}</button>`).join('')}</div>
+      <select class="input" data-change="cat-genre" aria-label="Genre">
+        <option value="">Alle Genres</option>
+        ${PICKABLE_GENRES.map(g => `<option ${UI.catalogGenre === g ? 'selected' : ''}>${g}</option>`).join('')}
+      </select>
+    </div>
+    <div id="cat-results">${catalogResultsHTML()}</div>`;
+}
+
+function catalogResultsHTML() {
+  const q = norm(UI.catalogQuery);
+  const matchesFilter = t => (UI.catalogType === 'all' || t.type === UI.catalogType) && (!UI.catalogGenre || (t.genres || []).includes(UI.catalogGenre));
+  const local = localTitles().filter(t => {
+    if (!matchesFilter(t)) return false;
+    if (!q) return true;
+    const hay = norm([t.title, t.originalTitle, t.franchise, (t.genres || []).join(' '), t.year].join(' '));
+    return q.split(' ').every(w => hay.includes(w));
+  }).sort((a, b) => a.title.localeCompare(b.title, 'de'));
+
+  let html = `<div class="result-meta">${local.length} Titel in deinem Katalog</div>`
+    + (local.length ? `<div class="grid">${local.map(t => cardHTML(t)).join('')}</div>`
+      : emptyHTML('🔎', 'Nichts gefunden', q ? 'Kein lokaler Titel passt zur Suche. Du kannst ihn als eigenen Titel anlegen.' : 'Keine Titel für diesen Filter.',
+        '<button class="btn" data-action="add-title">Eigenen Titel anlegen</button>'));
+
+  if (Settings.getToken() && q.length >= 2) {
+    const s = UI.search;
+    const localKeys = new Set(localTitles().flatMap(t => [tmdbKey(t), titleKey(t)].filter(Boolean)));
+    const online = s.query === UI.catalogQuery.trim() ? s.items.filter(t => matchesFilter(t) && !localKeys.has(tmdbKey(t)) && !localKeys.has(titleKey(t))) : [];
+    html += `<div class="section"><div class="section-head"><div><h2>Online bei TMDB</h2><p>Öffnen und „Zu meiner Liste hinzufügen“ übernimmt den Titel inkl. TMDB-ID.</p></div></div>
+      ${s.loading || s.query !== UI.catalogQuery.trim() ? skeletonGrid(6)
+        : s.error ? `<div class="notice warn"><span class="ico">📡</span><div class="grow">${esc(tmdbErrorText(s.error))}</div></div>`
+        : online.length ? `<div class="grid">${online.map(t => cardHTML(t, { overview: true })).join('')}</div>`
+        : '<p class="muted">Keine weiteren Treffer bei TMDB.</p>'}</div>`;
+  }
+  return html;
+}
+
+const runSearch = debounce(async () => {
+  const query = UI.catalogQuery.trim();
+  if (!Settings.getToken() || norm(query).length < 2) return;
+  UI.search = { query, items: [], loading: true, error: null };
+  try {
+    const items = await TMDB.search(query);
+    if (UI.search.query !== query) return;
+    items.forEach(t => Runtime.add(t));
+    UI.search = { query, items, loading: false, error: null };
+  } catch (err) {
+    if (UI.search.query !== query) return;
+    UI.search = { query, items: [], loading: false, error: err };
+  }
+  updateCatalogResults();
+}, 450);
+
+function updateCatalogResults() {
+  const box = $('#cat-results');
+  if (box && UI.view === 'katalog') box.innerHTML = catalogResultsHTML();
+}
+
+function renderInterests() {
+  const interests = Store.state.interests;
+  const pool = candidatePool();
+  const suggestions = SUGGESTED_INTERESTS.filter(s => !interests.some(i => norm(i) === norm(s)));
+  return `<div class="page-head"><div><h1>Interessen</h1><p>Was dich begeistert, wird in den Empfehlungen stärker gewichtet.</p></div></div>
+    <div class="panels">
+      <div class="panel">
+        <h2>Meine Interessen</h2>
+        <p>Reihen (z. B. „Marvel“), einzelne Titel („Avengers“), Genres („Krimi“) oder Themen.</p>
+        <form class="inline" data-submit="add-interest" autocomplete="off">
+          <input class="input" name="interest" maxlength="60" placeholder="z. B. John Wick, Sci-Fi, Avengers …" aria-label="Neues Interesse">
+          <button class="btn primary" type="submit">${icon('plus')} Hinzufügen</button>
+        </form>
+        <div class="chips" style="margin-top:16px">
+          ${interests.length ? interests.map(i => {
+            const n = pool.filter(t => matchInterest(i, t)).length;
+            const g = interestGenre(norm(i));
+            return `<span class="chip big">${esc(i)} <span class="faint small">${g ? 'Genre · ' : ''}${n} Treffer</span><button data-action="remove-interest" data-value="${esc(i)}" aria-label="${esc(i)} entfernen">×</button></span>`;
+          }).join('') : '<p class="muted small">Noch keine Interessen eingetragen.</p>'}
+        </div>
+        ${suggestions.length ? `<h3 style="margin:20px 0 8px;font-size:.9rem" class="muted">Vorschläge</h3>
+          <div class="chips">${suggestions.map(s => `<button class="chip add" data-action="add-interest" data-value="${esc(s)}">+ ${esc(s)}</button>`).join('')}</div>` : ''}
+      </div>
+      <div class="panel">
+        <h2>So wirken Interessen</h2>
+        <ul class="rules" style="margin-top:12px">
+          <li><b>+3,5 Punkte</b>, wenn das Interesse im Titel vorkommt oder der Reihe entspricht – „Marvel“ erkennt auch neue Online-Titel wie Avengers, Thor oder Loki.</li>
+          <li><b>+2 Punkte</b>, wenn das Interesse ein Genre ist (z. B. „Krimi“, „Sci-Fi“, „Horror“) und der Titel dazu gehört.</li>
+          <li><b>+1 Punkt</b>, wenn der Begriff in der Beschreibung steht.</li>
+          <li>Mehrere Interessen addieren sich. Die Begründung erscheint direkt auf der Karte, z. B. „weil du Marvel magst“.</li>
+        </ul>
+      </div>
+    </div>`;
+}
+
+function renderAccount() {
+  const s = Store.state;
+  const token = Settings.getToken();
+  const cacheCount = Cache.keys().length;
+  const lastFetch = Math.max(0, ...Object.values(Online.lists).map(l => l.fetchedAt || 0));
+  return `<div class="page-head"><div><h1>Konto & Einstellungen</h1><p>Alle Daten bleiben lokal in diesem Browser.</p></div></div>
+    <div class="panels">
+      <div class="panel">
+        <h2>Profil</h2>
+        <p>Dein Name für die Begrüßung.</p>
+        <form class="inline" data-submit="save-name">
+          <input class="input" name="name" maxlength="40" value="${esc(s.profile.name)}" placeholder="Dein Name" aria-label="Profilname">
+          <button class="btn primary" type="submit">Speichern</button>
+        </form>
+        <dl class="kv" style="margin-top:16px">
+          <dt>Gesehen</dt><dd>${Object.values(s.entries).filter(e => e.status === 'seen').length}</dd>
+          <dt>Pausiert</dt><dd>${Object.values(s.entries).filter(e => e.status === 'paused').length}</dd>
+          <dt>Merkliste</dt><dd>${Object.values(s.entries).filter(e => e.status === 'watchlist').length}</dd>
+          <dt>Eigene Titel</dt><dd>${Object.values(s.titles).filter(t => t.source === 'custom').length}</dd>
+          <dt>Interessen</dt><dd>${s.interests.length}</dd>
+        </dl>
+      </div>
+
+      <div class="panel">
+        <h2>TMDB-Verbindung</h2>
+        <p>Read Access Token (v4) oder API-Schlüssel (v3). Wird nur in diesem Browser gespeichert und nicht exportiert.</p>
+        <form data-submit="save-token" autocomplete="off">
+          <div class="inline">
+            <input id="tmdb-token" class="input" name="token" type="${UI.showToken ? 'text' : 'password'}" value="${esc(token)}" placeholder="eyJhbGciOiJIUzI1NiJ9…" spellcheck="false" aria-label="TMDB-Schlüssel">
+            <button class="btn icon" type="button" data-action="toggle-token" title="${UI.showToken ? 'Verbergen' : 'Anzeigen'}" aria-label="Schlüssel anzeigen">${icon('eye')}</button>
+          </div>
+          <div class="inline" style="margin-top:10px">
+            <button class="btn primary" type="submit">Speichern & laden</button>
+            ${token ? `<button class="btn" type="button" data-action="test-token">Verbindung testen</button>
+            <button class="btn ghost" type="button" data-action="remove-token">Entfernen</button>` : ''}
+          </div>
+        </form>
+        <div class="status-line" id="token-status">${token ? `<span class="pos">●</span> Schlüssel hinterlegt${lastFetch ? ` · zuletzt geladen ${timeAgo(lastFetch)}` : ''}` : '<span class="faint">● Kein Schlüssel – die App nutzt den lokalen Katalog.</span>'}</div>
+        <ol class="steps">
+          <li>Kostenloses Konto auf <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a> anlegen.</li>
+          <li>Unter <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Einstellungen → API</a> einen API-Zugang beantragen.</li>
+          <li>Den „API-Lesezugriffstoken“ (Read Access Token) kopieren und hier einfügen.</li>
+        </ol>
+        <p class="attrib" style="margin-top:12px">Diese App nutzt die TMDB-API, ist aber nicht von TMDB unterstützt oder zertifiziert. Streaming-Daten: JustWatch.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Backup</h2>
+        <p>Exportiere alles als JSON-Datei, um es auf einem anderen Gerät oder nach einem Neustart wiederherzustellen.</p>
+        <div class="inline">
+          <button class="btn" data-action="export">${icon('download')} Exportieren</button>
+          <button class="btn" data-action="import">${icon('upload')} Importieren</button>
+        </div>
+        <p class="attrib" style="margin-top:12px">Zuletzt geändert: ${new Date(s.meta.updatedAt).toLocaleString('de-DE')}</p>
+      </div>
+
+      <div class="panel">
+        <h2>Zwischenspeicher & Daten</h2>
+        <p>Online-Ergebnisse werden 6 Stunden zwischengespeichert (${cacheCount} Einträge).</p>
+        <div class="inline">
+          <button class="btn" data-action="clear-cache">Cache leeren</button>
+          <button class="btn danger" data-action="reset-all">${icon('trash')} Alle Daten löschen</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------- Detailansicht ---------- */
+
+function openDetail(id) {
+  const t = resolveLocal(getTitle(id));
+  if (!t) return;
+  UI.modal = { id: t.id, providers: { state: 'idle', data: null } };
+  document.body.classList.add('modal-open');
+  renderModal();
+  loadDetailExtras(t);
+}
+
+async function loadDetailExtras(t) {
+  const prov = UI.modal.providers;
+  if (!Settings.getToken()) { prov.state = 'nokey'; renderModal(); return; }
+  if (!t.tmdbId) { prov.state = 'nolink'; renderModal(); return; }
+  prov.state = 'loading';
+  renderModal();
+  try {
+    const d = await TMDB.details(t.type, t.tmdbId);
+    applyDetails(t, d.data);
+  } catch { /* Details sind optional */ }
+  if (UI.modal?.id !== t.id) return;
+  if (!t.tmdbId) { prov.state = 'nolink'; renderModal(); return; }
+  try {
+    const r = await TMDB.providers(t.type, t.tmdbId);
+    if (UI.modal?.id !== t.id) return;
+    prov.state = 'done';
+    prov.data = r.data.results?.DE || null;
+  } catch (err) {
+    if (UI.modal?.id !== t.id) return;
+    prov.state = 'error';
+    prov.error = err;
+  }
+  renderModal();
+}
+
+function closeModal() {
+  UI.modal = null;
+  $('#modal-root').innerHTML = '';
+  document.body.classList.remove('modal-open');
+}
+
+function providersHTML() {
+  const p = UI.modal.providers;
+  if (p.state === 'nokey') return '<p class="muted small">Mit TMDB-Schlüssel siehst du hier, wo der Titel in Deutschland läuft.</p>';
+  if (p.state === 'nolink') return '<p class="muted small">Für diesen Titel gibt es keine TMDB-Verknüpfung.</p>';
+  if (p.state === 'loading' || p.state === 'idle') return '<p class="muted small">Lade Anbieter …</p>';
+  if (p.state === 'error') return `<p class="muted small">Anbieter konnten nicht geladen werden. ${esc(tmdbErrorText(p.error))}</p>`;
+  const de = p.data;
+  const groups = [['flatrate', 'Im Abo'], ['free', 'Kostenlos'], ['ads', 'Mit Werbung'], ['rent', 'Leihen'], ['buy', 'Kaufen']];
+  const rows = de ? groups.filter(([k]) => de[k]?.length).map(([k, label]) => `<div class="prov-group"><span class="prov-label">${label}</span><div class="prov-list">${de[k].map(pv => {
+    const logo = safePath(pv.logo_path);
+    return `<span class="prov">${logo ? `<img src="${TMDB_IMG}w92${logo}" alt="" loading="lazy" onerror="this.remove()">` : ''}${esc(pv.provider_name)}</span>`;
+  }).join('')}</div></div>`).join('') : '';
+  const link = de?.link && /^https:\/\//.test(de.link) ? ` · <a href="${esc(de.link)}" target="_blank" rel="noopener">Alle Angebote ansehen</a>` : '';
+  return (rows || '<p class="muted small">Aktuell sind keine Streaming-Angebote in Deutschland bekannt.</p>')
+    + `<p class="attrib">Streaming-Daten von <a href="https://www.justwatch.com/de" target="_blank" rel="noopener">JustWatch</a> über TMDB${link}</p>`;
+}
+
+function renderModal() {
+  const root = $('#modal-root');
+  if (!UI.modal) { root.innerHTML = ''; return; }
+  const t = getTitle(UI.modal.id);
+  if (!t) { closeModal(); return; }
+  const e = getEntry(t.id);
+  const id = esc(t.id);
+  const r = scoreTitle(t, buildProfile());
+  const count = e && t.episodes?.[e.season];
+  const scrollTop = root.querySelector('.modal')?.scrollTop || 0;
+
+  root.innerHTML = `<div class="backdrop" data-backdrop>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(t.title)}">
+      <button class="btn icon ghost modal-close" data-action="close-modal" aria-label="Schließen">${icon('x')}</button>
+      <div class="detail">
+        <div class="detail-poster">${posterHTML(t, 'w500')}</div>
+        <div class="detail-info">
+          <div class="kicker">${typeLabel(t)} · ${t.year || 'Jahr unbekannt'}${t.type === 'tv' && t.seasons ? ` · ${t.seasons} Staffel${t.seasons > 1 ? 'n' : ''}` : ''}${t.releaseDate && t.releaseDate > new Date().toISOString().slice(0, 10) ? ` · ab ${new Date(t.releaseDate).toLocaleDateString('de-DE')}` : ''}</div>
+          <h2>${esc(t.title)}</h2>
+          ${t.originalTitle && norm(t.originalTitle) !== norm(t.title) ? `<div class="meta">Originaltitel: ${esc(t.originalTitle)}</div>` : ''}
+          <div class="chips">
+            ${(t.genres || []).map(g => `<span class="chip">${esc(g)}</span>`).join('')}
+            ${t.franchise ? `<span class="chip accent">Reihe: ${esc(t.franchise)}</span>` : ''}
+            ${t.tmdbRating ? `<span class="chip gold">★ ${fmt1(t.tmdbRating)} TMDB</span>` : ''}
+          </div>
+          <p class="overview">${esc(t.overview || 'Keine Beschreibung vorhanden.')}</p>
+
+          <div class="block">
+            <h4>${e?.status ? 'Status' : 'Zu meiner Liste hinzufügen'}</h4>
+            <div class="seg">${Object.entries(STATUS).map(([k, l]) => `<button class="${e?.status === k ? 'on' : ''}" data-action="set-status" data-id="${id}" data-value="${k}" aria-pressed="${e?.status === k}">${STATUS_ICON[k]} ${l}</button>`).join('')}</div>
+          </div>
+
+          ${t.type === 'tv' && e?.status && e.status !== 'watchlist' ? `<div class="block">
+            <h4>Fortschritt</h4>
+            <div class="inline">
+              <div class="stepper"><button data-action="season-step" data-id="${id}" data-value="-1" aria-label="Staffel zurück">−</button><span>Staffel ${e.season}${t.seasons ? ` / ${t.seasons}` : ''}</span><button data-action="season-step" data-id="${id}" data-value="1" aria-label="Staffel vor">+</button></div>
+              <div class="stepper"><button data-action="ep-step" data-id="${id}" data-value="-1" aria-label="Folge zurück">−</button><span>Folge ${e.episode}${count ? ` / ${count}` : ''}</span><button data-action="ep-step" data-id="${id}" data-value="1" aria-label="Folge vor">+</button></div>
+            </div>
+          </div>` : ''}
+
+          <div class="block two">
+            <div><h4>Meine Bewertung</h4>${starsHTML(t.id, e?.rating)}</div>
+            <div><h4>Gefällt mir?</h4>${thumbsHTML(t.id, e?.vote)}</div>
+          </div>
+
+          <div class="block">
+            <h4>${e ? 'Passung zu deinem Geschmack' : 'Warum dieser Titel?'}</h4>
+            ${e ? '<p class="muted small" style="margin-bottom:6px">Steht in deiner Liste und wird daher nicht mehr vorgeschlagen.</p>' : ''}
+            ${r.parts.length ? `<table class="breakdown">${r.parts.map(p => `<tr><td>${esc(p.label)}</td><td class="v ${p.value >= 0 ? 'pos' : 'neg'}">${signed(p.value)}</td></tr>`).join('')}
+              <tr class="total"><td>Gesamt</td><td class="v">${signed(r.score)}</td></tr></table>`
+              : '<p class="muted small">Noch keine Übereinstimmung – bewerte mehr Titel oder trage Interessen ein.</p>'}
+          </div>
+
+          <div class="block"><h4>Streaming in Deutschland</h4>${providersHTML()}</div>
+
+          <div class="actions">
+            ${!e ? `<button class="btn" data-action="dismiss" data-id="${id}">👎 Nicht interessiert</button>` : `<button class="btn ghost" data-action="remove" data-id="${id}">${icon('x')} Aus Liste entfernen</button>`}
+            ${t.source === 'custom' ? `<button class="btn ghost" data-action="edit-title" data-id="${id}">${icon('edit')} Bearbeiten</button>
+            <button class="btn danger" data-action="delete-title" data-id="${id}">${icon('trash')} Titel löschen</button>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  const m = root.querySelector('.modal');
+  if (m) m.scrollTop = scrollTop;
+}
+
+/* ---------- Dialoge ---------- */
+
+function closeDialog(result = false) {
+  const fn = UI.dialogClose;
+  UI.dialogClose = null;
+  $('#dialog-root').innerHTML = '';
+  if (fn) fn(result);
+}
+
+/** Sicherheitsabfrage. Mit requireText muss der Nutzer ein Wort eintippen. */
+function confirmDialog({ title, text, confirm = 'OK', danger = false, requireText = null }) {
+  return new Promise(resolve => {
+    UI.dialogClose = resolve;
+    $('#dialog-root').innerHTML = `<div class="backdrop" data-dialog-backdrop><div class="modal small" role="alertdialog" aria-modal="true" aria-label="${esc(title)}"><div class="pad">
+      <h3>${esc(title)}</h3><p>${text}</p>
+      ${requireText ? `<label class="field" style="margin-top:14px">Zur Bestätigung „${esc(requireText)}“ eingeben<input class="input" id="dlg-input" autocomplete="off"></label>` : ''}
+      <div class="actions" style="margin-top:18px">
+        <button class="btn ghost" data-action="dialog-result" data-value="0">Abbrechen</button>
+        <button class="btn ${danger ? 'danger' : 'primary'}" id="dlg-ok" data-action="dialog-result" data-value="1" ${requireText ? 'disabled' : ''}>${esc(confirm)}</button>
+      </div></div></div></div>`;
+    const input = $('#dlg-input');
+    if (input) {
+      input.addEventListener('input', () => { $('#dlg-ok').disabled = input.value.trim().toUpperCase() !== requireText.toUpperCase(); });
+      input.focus();
+    } else $('#dlg-ok').focus();
+  });
+}
+
+function openTitleForm(existing = null) {
+  const t = existing || { type: 'movie', genres: [], title: '', year: '', seasons: '', franchise: '', overview: '' };
+  const franchises = [...new Set([...FRANCHISES.map(f => f.name), ...localTitles().map(x => x.franchise).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'de'));
+  UI.dialogClose = null;
+  $('#dialog-root').innerHTML = `<div class="backdrop" data-dialog-backdrop>
+    <form class="modal medium" data-submit="save-title" data-type="${t.type}" novalidate aria-label="Titel bearbeiten">
+      <div class="pad form-grid">
+        <h3>${existing ? 'Titel bearbeiten' : 'Eigenen Titel hinzufügen'}</h3>
+        <input type="hidden" name="id" value="${esc(existing?.id || '')}">
+        <label class="field">Titel *<input class="input" name="title" maxlength="120" required value="${esc(t.title)}" placeholder="z. B. Oppenheimer"></label>
+        <div class="row3">
+          <label class="field">Jahr<input class="input" name="year" type="number" inputmode="numeric" min="1888" max="2100" value="${esc(t.year || '')}" placeholder="${CURRENT_YEAR}"></label>
+          <label class="field">Typ<select class="input" name="type"><option value="movie" ${t.type === 'movie' ? 'selected' : ''}>Film</option><option value="tv" ${t.type === 'tv' ? 'selected' : ''}>Serie</option></select></label>
+          <label class="field seasons-field">Staffeln<input class="input" name="seasons" type="number" inputmode="numeric" min="1" max="99" value="${esc(t.seasons || '')}" placeholder="1"></label>
+        </div>
+        <fieldset><legend>Genres</legend><div class="picks">${PICKABLE_GENRES.map(g => `<label class="pick"><input type="checkbox" name="genres" value="${g}" ${(t.genres || []).includes(g) ? 'checked' : ''}><span>${g}</span></label>`).join('')}</div></fieldset>
+        <label class="field">Reihe / Franchise (optional)<input class="input" name="franchise" list="franchise-list" maxlength="60" value="${esc(t.franchise || '')}" placeholder="z. B. Marvel, John Wick">
+          <datalist id="franchise-list">${franchises.map(f => `<option value="${esc(f)}">`).join('')}</datalist></label>
+        <label class="field">Kurzbeschreibung (optional)<textarea class="input" name="overview" rows="3" maxlength="600">${esc(t.overview || '')}</textarea></label>
+        ${!existing ? `<label class="field">Direkt eintragen als<select class="input" name="status"><option value="">– nur in den Katalog –</option>${Object.entries(STATUS).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>` : ''}
+        <div class="form-error" id="form-error" role="alert"></div>
+        <div class="actions">
+          <button type="button" class="btn ghost" data-action="dialog-result" data-value="0">Abbrechen</button>
+          <button type="submit" class="btn primary">Speichern</button>
+        </div>
+      </div>
+    </form></div>`;
+  $('#dialog-root input[name="title"]').focus();
+}
+
+/* ---------- Toasts ---------- */
+
+function toast(msg, { type = 'info', action = null, ms = 3600 } = {}) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${esc(msg)}</span>`;
+  if (action) {
+    const b = document.createElement('button');
+    b.textContent = action.label;
+    b.onclick = () => { action.fn(); el.remove(); };
+    el.append(b);
+  }
+  $('#toasts').append(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, ms);
+}
+
+/* =========================================================================
+   9. AKTIONEN & EREIGNISSE
+   ========================================================================= */
+
+const titleFrom = el => getTitle(el.dataset.id);
+
+function stepEpisode(t, e, delta) {
+  let { season, episode } = e;
+  const counts = t.episodes || {};
+  episode += delta;
+  if (episode < 1) {
+    if (season > 1) { season--; episode = counts[season] || 1; } else episode = 1;
+  } else if (counts[season] && episode > counts[season]) {
+    if (!t.seasons || season < t.seasons) { season++; episode = 1; }
+    else {
+      episode = counts[season];
+      toast(`Letzte Folge von „${t.title}“ erreicht.`, { action: { label: 'Als gesehen markieren', fn: () => setEntry(t, { status: 'seen' }) } });
+    }
+  }
+  return { season, episode };
+}
+
+const ACTIONS = {
+  goto: el => { location.hash = '#' + el.dataset.value; },
+  open: el => openDetail(el.dataset.id),
+  'close-modal': () => closeModal(),
+  'dialog-result': el => closeDialog(el.dataset.value === '1'),
+
+  'quick-watchlist': el => {
+    const t = titleFrom(el); if (!t) return;
+    const local = setEntry(t, { status: 'watchlist' });
+    toast(`„${t.title}“ steht auf deiner Merkliste.`, { type: 'ok', action: { label: 'Rückgängig', fn: () => restoreEntry(local, null) } });
+  },
+  'quick-dismiss': el => ACTIONS.dismiss(el),
+  dismiss: el => {
+    const t = titleFrom(el); if (!t) return;
+    const prev = getEntry(resolveLocal(t).id);
+    const local = setEntry(t, { dismissed: true, status: null });
+    if (UI.modal) closeModal();
+    toast(`„${t.title}“ wird nicht mehr vorgeschlagen.`, { action: { label: 'Rückgängig', fn: () => restoreEntry(local, prev) } });
+  },
+  'set-status': el => {
+    const t = titleFrom(el); if (!t) return;
+    const e = getEntry(resolveLocal(t).id);
+    const value = el.dataset.value;
+    const next = e?.status === value ? null : value;
+    setEntry(t, { status: next });
+    if (!e?.status && next) toast(`Zu „${STATUS[next]}“ hinzugefügt.`, { type: 'ok' });
+  },
+  rate: el => {
+    const t = titleFrom(el); if (!t) return;
+    const v = +el.dataset.value;
+    const e = getEntry(resolveLocal(t).id);
+    setEntry(t, { rating: e?.rating === v ? null : v });
+  },
+  vote: el => {
+    const t = titleFrom(el); if (!t) return;
+    const v = el.dataset.value;
+    const e = getEntry(resolveLocal(t).id);
+    setEntry(t, { vote: e?.vote === v ? null : v });
+  },
+  'ep-step': el => {
+    const t = titleFrom(el); const e = t && getEntry(t.id); if (!e) return;
+    setEntry(t, stepEpisode(t, e, +el.dataset.value));
+  },
+  'season-step': el => {
+    const t = titleFrom(el); const e = t && getEntry(t.id); if (!e) return;
+    const target = e.season + +el.dataset.value;
+    if (target < 1) return;
+    if (t.seasons && target > t.seasons) { toast('Das war die letzte bekannte Staffel.'); return; }
+    setEntry(t, { season: target, episode: 1 });
+  },
+  'mark-seen': el => {
+    const t = titleFrom(el); if (!t) return;
+    setEntry(t, { status: 'seen' });
+    toast(`„${t.title}“ als gesehen markiert. Bewerte ihn, um die Vorschläge zu verbessern!`, { type: 'ok' });
+  },
+  remove: el => {
+    const t = titleFrom(el); if (!t) return;
+    const prev = getEntry(t.id);
+    Store.update(s => {
+      delete s.entries[t.id];
+      if (s.titles[t.id]?.source === 'tmdb') delete s.titles[t.id];
+    });
+    toast(`„${t.title}“ aus der Liste entfernt.`, { action: { label: 'Rückgängig', fn: () => restoreEntry(t, prev) } });
+  },
+  restore: el => { const t = titleFrom(el); if (t) setEntry(t, { dismissed: false, vote: null }); },
+
+  'toggle-profile': () => { UI.showProfile = !UI.showProfile; App.render(); },
+  'disc-tab': el => {
+    UI.discoverTab = el.dataset.value;
+    const st = Online.lists[UI.discoverTab];
+    if (Settings.getToken() && (!st || (!st.items.length && !st.loading))) Online.load(UI.discoverTab).then(() => App.softRender());
+    App.render();
+  },
+  refresh: async () => { await Online.loadAll(true); toast('Online-Titel aktualisiert.', { type: 'ok' }); },
+  'list-filter': el => { UI.listFilter = el.dataset.value; App.render(); },
+  'cat-type': el => { UI.catalogType = el.dataset.value; $$('.seg button[data-action="cat-type"]').forEach(b => b.classList.toggle('on', b === el)); updateCatalogResults(); },
+
+  'add-title': () => openTitleForm(),
+  'edit-title': el => { const t = titleFrom(el); if (t?.source === 'custom') openTitleForm(t); },
+  'delete-title': async el => {
+    const t = titleFrom(el); if (!t || t.source !== 'custom') return;
+    const ok = await confirmDialog({ title: 'Titel löschen?', text: `„${esc(t.title)}“ wird mit Status und Bewertung entfernt.`, confirm: 'Löschen', danger: true });
+    if (!ok) return;
+    closeModal();
+    Store.update(s => { delete s.titles[t.id]; delete s.entries[t.id]; });
+    toast('Titel gelöscht.');
+  },
+
+  'add-interest': el => addInterest(el.dataset.value),
+  'remove-interest': el => {
+    const v = el.dataset.value;
+    Store.update(s => { s.interests = s.interests.filter(i => i !== v); });
+  },
+
+  'toggle-token': () => {
+    UI.showToken = !UI.showToken;
+    const input = $('#tmdb-token');
+    if (input) input.type = UI.showToken ? 'text' : 'password';
+  },
+  'test-token': async () => {
+    const box = $('#token-status');
+    if (box) box.innerHTML = '<span class="faint">Teste Verbindung …</span>';
+    try {
+      await fetchTMDB('/configuration', {}, { cache: false });
+      if (box) box.innerHTML = '<span class="pos">●</span> Verbindung erfolgreich – der Schlüssel funktioniert.';
+    } catch (err) {
+      if (box) box.innerHTML = `<span class="neg">●</span> ${esc(tmdbErrorText(err))}`;
+    }
+  },
+  'remove-token': () => {
+    Settings.clearToken();
+    Online.lists = {};
+    toast('TMDB-Schlüssel entfernt. Die App nutzt jetzt den lokalen Katalog.');
+    App.render();
+  },
+  export: () => exportData(),
+  import: () => $('#import-file').click(),
+  'clear-cache': () => { Cache.clear(); toast('Zwischenspeicher geleert.', { type: 'ok' }); App.render(); },
+  'reset-all': async () => {
+    const ok = await confirmDialog({
+      title: 'Alle Daten löschen?',
+      text: 'Profil, Liste, Bewertungen, Interessen, eigene Titel, TMDB-Schlüssel und Cache werden unwiderruflich aus diesem Browser entfernt. Erstelle vorher ggf. ein Backup.',
+      confirm: 'Endgültig löschen', danger: true, requireText: 'LÖSCHEN',
+    });
+    if (!ok) return;
+    Cache.clear();
+    Settings.clearToken();
+    Online.lists = {};
+    Runtime.titles.clear();
+    Runtime.tags.clear();
+    closeModal();
+    await Store.reset();
+    location.hash = '#start';
+    toast('Alle Daten wurden gelöscht.', { type: 'ok' });
+  },
+};
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+const CHANGES = {
+  status: el => { const t = titleFrom(el); if (t) setEntry(t, { status: el.value || null }); },
+  season: el => {
+    const t = titleFrom(el); if (!t) return;
+    let v = Math.max(1, parseInt(el.value, 10) || 1);
+    if (t.seasons) v = Math.min(v, t.seasons);
+    setEntry(t, { season: v });
+  },
+  episode: el => { const t = titleFrom(el); if (t) setEntry(t, { episode: Math.max(1, parseInt(el.value, 10) || 1) }); },
+  'list-sort': el => { UI.listSort = el.value; App.render(); },
+  'cat-genre': el => { UI.catalogGenre = el.value; updateCatalogResults(); },
+};
+
+const SUBMITS = {
+  'add-interest': form => {
+    const input = form.elements.interest;
+    if (addInterest(input.value)) input.value = '';
+    $('#view input[name="interest"]')?.focus();
+  },
+  'save-name': form => {
+    const name = form.elements.name.value.trim().slice(0, 40);
+    Store.update(s => { s.profile.name = name; });
+    toast(name ? `Hallo, ${name}!` : 'Name entfernt.', { type: 'ok' });
+  },
+  'save-token': async form => {
+    const token = form.elements.token.value.trim();
+    if (!token) { toast('Bitte einen Schlüssel eingeben.', { type: 'err' }); return; }
+    if (token.length < 20 || /\s/.test(token)) { toast('Das sieht nicht nach einem gültigen TMDB-Schlüssel aus.', { type: 'err' }); return; }
+    Settings.setToken(token);
+    Online.lists = {};
+    App.render();
+    toast('Schlüssel gespeichert – lade aktuelle Titel …');
+    await Online.loadAll(true);
+    const err = Online.anyError();
+    if (err) toast(tmdbErrorText(err), { type: 'err', ms: 6000 });
+    else { toast('TMDB verbunden!', { type: 'ok' }); enrichCatalog(); }
+    if (UI.view === 'konto') App.render();
+  },
+  'save-title': form => {
+    const fd = new FormData(form);
+    const title = String(fd.get('title') || '').trim();
+    const year = parseInt(fd.get('year'), 10) || null;
+    const type = fd.get('type') === 'tv' ? 'tv' : 'movie';
+    const seasons = type === 'tv' ? (parseInt(fd.get('seasons'), 10) || null) : null;
+    const err = $('#form-error');
+    if (!title) { err.textContent = 'Bitte gib einen Titel ein.'; form.elements.title.focus(); return; }
+    if (year && (year < 1888 || year > 2100)) { err.textContent = 'Bitte ein gültiges Jahr eingeben.'; return; }
+    if (seasons && (seasons < 1 || seasons > 99)) { err.textContent = 'Staffeln: 1 bis 99.'; return; }
+    const id = fd.get('id') || `own:${uid()}`;
+    const status = fd.get('status');
+    const prev = Store.state.titles[id] || {};
+    const t = {
+      ...prev, id, source: 'custom', type, title, year, seasons,
+      genres: fd.getAll('genres').map(String).filter(g => GENRES.includes(g)),
+      franchise: String(fd.get('franchise') || '').trim() || null,
+      overview: String(fd.get('overview') || '').trim(),
+    };
+    closeDialog();
+    Store.update(s => { s.titles[id] = t; });
+    if (status && STATUS[status]) setEntry(t, { status });
+    toast(prev.id ? 'Änderungen gespeichert.' : `„${title}“ hinzugefügt.`, { type: 'ok' });
+  },
+};
+
+function addInterest(value) {
+  const v = String(value || '').trim().slice(0, 60);
+  if (!v) return false;
+  if (Store.state.interests.some(i => norm(i) === norm(v))) { toast(`„${v}“ ist schon eingetragen.`); return false; }
+  Store.update(s => { s.interests.push(v); });
+  toast(`Interesse „${v}“ hinzugefügt.`, { type: 'ok' });
+  return true;
+}
+
+/* ---------- Export / Import ---------- */
+
+function exportData() {
+  const payload = { app: 'CineMatch', format: SCHEMA_VERSION, exportedAt: new Date().toISOString(), data: Store.state };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cinematch-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('Backup heruntergeladen.', { type: 'ok' });
+}
+
+async function importData(file) {
+  let obj;
+  try { obj = JSON.parse(await file.text()); }
+  catch { toast('Die Datei ist kein gültiges JSON.', { type: 'err' }); return; }
+  const data = isObj(obj?.data) ? obj.data : obj;
+  if (!isObj(data) || !isObj(data.entries)) { toast('Das ist keine CineMatch-Sicherung.', { type: 'err' }); return; }
+  const n = Object.keys(data.entries).length;
+  const ok = await confirmDialog({
+    title: 'Backup importieren?',
+    text: `Die Sicherung enthält ${n} Einträge${data.profile?.name ? ` von „${esc(data.profile.name)}“` : ''}. Deine aktuellen Daten werden dabei ersetzt.`,
+    confirm: 'Importieren',
+  });
+  if (!ok) return;
+  Store.replace(data);
+  toast('Backup wiederhergestellt.', { type: 'ok' });
+}
+
+/* =========================================================================
+   10. APP – Routing & Start
+   ========================================================================= */
+
+const VIEWS = {
+  start: { label: 'Start', short: 'Start', icon: 'home', render: renderHome },
+  entdecken: { label: 'Entdecken', short: 'Neu', icon: 'compass', render: renderDiscover },
+  liste: { label: 'Meine Liste', short: 'Liste', icon: 'list', render: renderList },
+  katalog: { label: 'Katalog', short: 'Katalog', icon: 'grid', render: renderCatalog },
+  interessen: { label: 'Interessen', short: 'Interessen', icon: 'spark', render: renderInterests },
+  konto: { label: 'Konto', short: 'Konto', icon: 'user', render: renderAccount },
+};
+
+const App = {
+  render() {
+    const view = $('#view');
+    try {
+      view.innerHTML = VIEWS[UI.view].render();
+    } catch (err) {
+      console.error(err);
+      view.innerHTML = emptyHTML('😵', 'Da ist etwas schiefgelaufen', esc(err.message));
+    }
+    $$('#nav a, #bottomnav a').forEach(a => a.classList.toggle('active', a.dataset.view === UI.view));
+    $('#avatar').textContent = (Store.state.profile.name || '?').trim().charAt(0).toUpperCase() || '?';
+    if (UI.modal) renderModal();
+  },
+  /** Für Hintergrund-Updates: nur Ansichten ohne Texteingaben neu zeichnen. */
+  softRender() {
+    if (UI.view === 'start' || UI.view === 'entdecken') {
+      const y = window.scrollY;
+      App.render();
+      window.scrollTo(0, y);
+      return;
+    }
+    if (UI.view === 'katalog') updateCatalogResults();
+    if (UI.modal) renderModal();
+  },
+  route() {
+    const v = location.hash.replace('#', '');
+    UI.view = VIEWS[v] ? v : 'start';
+    App.render();
+    window.scrollTo(0, 0);
+  },
+};
+
+function buildNav() {
+  $('#nav').innerHTML = Object.entries(VIEWS).filter(([k]) => k !== 'konto').map(([k, v]) =>
+    `<a href="#${k}" data-view="${k}">${icon(v.icon)}${v.label}</a>`).join('');
+  $('#bottomnav').innerHTML = Object.entries(VIEWS).map(([k, v]) =>
+    `<a href="#${k}" data-view="${k}">${icon(v.icon)}<span>${v.short}</span></a>`).join('');
+}
+
+function bindEvents() {
+  document.addEventListener('click', ev => {
+    if (ev.target.matches('[data-backdrop]')) { closeModal(); return; }
+    if (ev.target.matches('[data-dialog-backdrop]')) { closeDialog(false); return; }
+    const el = ev.target.closest('[data-action]');
+    if (!el) return;
+    const fn = ACTIONS[el.dataset.action];
+    if (fn) { ev.preventDefault(); fn(el, ev); }
+  });
+  document.addEventListener('change', ev => {
+    const el = ev.target.closest('[data-change]');
+    if (el) { CHANGES[el.dataset.change]?.(el); return; }
+    if (ev.target.name === 'type' && ev.target.form?.dataset.submit === 'save-title') ev.target.form.dataset.type = ev.target.value;
+  });
+  document.addEventListener('submit', ev => {
+    const form = ev.target.closest('[data-submit]');
+    if (!form) return;
+    ev.preventDefault();
+    SUBMITS[form.dataset.submit]?.(form);
+  });
+  document.addEventListener('input', ev => {
+    if (ev.target.id === 'cat-q') {
+      UI.catalogQuery = ev.target.value;
+      updateCatalogResults();
+      runSearch();
+    }
+  });
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') {
+      if ($('#dialog-root').innerHTML) closeDialog(false);
+      else if (UI.modal) closeModal();
+    }
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('.card[data-action="open"]')) {
+      ev.preventDefault();
+      openDetail(ev.target.dataset.id);
+    }
+  });
+  $('#import-file').addEventListener('change', ev => {
+    const file = ev.target.files?.[0];
+    ev.target.value = '';
+    if (file) importData(file);
+  });
+  window.addEventListener('hashchange', () => App.route());
+  // Änderungen aus einem anderen Tab übernehmen
+  window.addEventListener('storage', async ev => {
+    if (ev.key !== STORAGE_KEY) return;
+    try { Store.state = migrate(ev.newValue ? JSON.parse(ev.newValue) : null); App.render(); } catch { /* ignorieren */ }
+  });
+  window.addEventListener('online', () => { if (Settings.getToken() && Online.anyError()) Online.loadAll(); });
+}
+
+async function init() {
+  await Store.init();
+  Store.on(() => App.render());
+  buildNav();
+  bindEvents();
+  App.route();
+  if (Store.loadError) toast('Gespeicherte Daten waren beschädigt und wurden gesichert. Die App startet neu.', { type: 'err', ms: 7000 });
+  if (Settings.getToken()) {
+    Online.loadAll().then(enrichCatalog).catch(err => console.warn(err));
+  }
+}
+
+init();
+</script>
+</body>
+</html>
